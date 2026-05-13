@@ -4,7 +4,7 @@ This file describes how coding agents should work in this repository.
 
 ## Project Purpose
 
-FitSheet Coach GPT is a TypeScript Express middleware API for a Custom GPT personal trainer. It validates requests, normalizes health data, stores logs in JSON file storage by default, and exposes summary endpoints for GPT Actions.
+FitSheet Coach GPT is a TypeScript Express middleware API for a Custom GPT personal trainer. It validates requests, normalizes health data, stores logs in Upstash Redis for Vercel deployment, and exposes summary endpoints for GPT Actions.
 
 ## Local Constraint
 
@@ -13,6 +13,7 @@ Do not run Node.js or npm commands from the assistant environment unless the use
 Examples:
 
 ```bash
+npm install
 npm run build
 npm test
 npm run dev
@@ -21,6 +22,8 @@ npm run dev
 ## Repository Structure
 
 ```txt
+api/
+  index.ts
 src/
   app.ts
   server.ts
@@ -35,12 +38,14 @@ src/
 tests/
 docs/
 openapi.yaml
+vercel.json
 ```
 
 ## Ownership Rules
 
+- `api/index.ts`: Vercel Function entrypoint.
 - `src/app.ts`: Express app composition.
-- `src/server.ts`: runtime server entrypoint.
+- `src/server.ts`: local runtime server entrypoint.
 - `src/config/`: environment parsing and config.
 - `src/constants/`: stable lookup tables.
 - `src/middleware/`: Express middleware only.
@@ -52,6 +57,7 @@ openapi.yaml
 - `tests/`: automated tests.
 - `docs/`: human setup and operational docs.
 - `openapi.yaml`: GPT Actions schema.
+- `vercel.json`: Vercel routing/build configuration.
 
 ## Coding Guidelines
 
@@ -67,37 +73,42 @@ openapi.yaml
 
 ## Storage Contract
 
-Default storage:
+Production storage:
+
+```env
+STORAGE_DRIVER=upstash
+UPSTASH_REDIS_REST_URL=
+UPSTASH_REDIS_REST_TOKEN=
+REDIS_KEY_PREFIX=fitsheet
+```
+
+Local-only fallback:
 
 ```env
 STORAGE_DRIVER=json
 DATA_FILE_PATH=./data/fitsheet.json
 ```
 
-Runtime data shape:
+Upstash key pattern:
 
-```json
-{
-  "schemaVersion": 1,
-  "profiles": [],
-  "foods": [],
-  "exercises": [],
-  "weights": []
-}
+```txt
+fitsheet:profiles:<userId>
+fitsheet:foods:<userId>:<yyyy-mm-dd>
+fitsheet:exercises:<userId>:<yyyy-mm-dd>
+fitsheet:weights:<userId>
 ```
-
-JSON file storage is acceptable for local development and MVP testing. It is not durable on Vercel serverless deployment. For production, preserve the `StorageService` interface and replace the adapter with a hosted NoSQL backend.
 
 ## Verification
 
 When code changes are made, ask the user to run the relevant commands:
 
 ```bash
+npm install
 npm run build
 npm test
 ```
 
-If storage behavior changes, also ask the user to run the API locally and verify that `data/fitsheet.json` is updated after sample requests.
+If storage behavior changes, also ask the user to run local API smoke tests or production Vercel smoke tests.
 
 ## Git Workflow
 
@@ -108,23 +119,15 @@ If storage behavior changes, also ask the user to run the API locally and verify
 
 ## Deployment Notes
 
-Deploy only after local build, tests, and local API storage verification pass.
+Deploy only after local build and tests pass.
 
 Recommended order:
 
 ```txt
-local JSON storage verification
--> Render Blueprint deploy
--> verify Render persistent disk behavior
+Upstash Redis setup
+-> local build/test
+-> Vercel deploy
+-> production smoke test
 -> update openapi.yaml production server URL
 -> connect Custom GPT Actions
 ```
-
-The repo includes `render.yaml`. It deploys a Node web service with:
-
-```txt
-DATA_FILE_PATH=/var/data/fitsheet.json
-disk mountPath=/var/data
-```
-
-Do not change production JSON storage to a path outside the persistent disk mount unless the app has migrated to a hosted NoSQL backend.

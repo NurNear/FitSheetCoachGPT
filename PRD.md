@@ -10,7 +10,7 @@ Architecture:
 User
 → Custom GPT
 → Middleware API
-→ JSON file storage
+→ Upstash Redis
 → Dashboard summary
 ```
 
@@ -34,17 +34,17 @@ User
 - TypeScript
 - Express.js
 - Zod
-- JSON file storage
+- Upstash Redis
 
 ## Deployment
 
-- Render พร้อม persistent disk สำหรับ JSON file storage
-- Vercel ใช้ได้สำหรับ API แต่ไม่ควรใช้ JSON file storage เป็น production storage เพราะ filesystem ไม่ durable
+- Vercel Functions
 
 ## Storage
 
-- Default: JSON file storage
-- Optional future migration: NoSQL backend เช่น Vercel KV, Upstash Redis, MongoDB Atlas, Firestore, หรือ Supabase
+- Default production: Upstash Redis
+- Local fallback: JSON file storage
+- Future migration option: NoSQL backend อื่น เช่น MongoDB Atlas, Firestore, หรือ Supabase
 
 ## API Style
 
@@ -58,16 +58,19 @@ User
 
 1. GPT สามารถเรียก API ได้ผ่าน GPT Actions
 2. Middleware API validate และ normalize data
-3. Backend เขียนข้อมูลลง JSON file ผ่าน storage abstraction
+3. Backend เขียนข้อมูลลง Upstash Redis ผ่าน storage abstraction
 4. มี business logic สำหรับ calories/BMR/TDEE
 5. มี dashboard endpoint
-6. Future-proof สำหรับ migration ไป NoSQL/database จริง
+6. Future-proof สำหรับ migration ไป NoSQL/database อื่น
 
 ---
 
 # Folder Structure
 
 ```txt
+api/
+  index.ts
+
 src/
   config/
   constants/
@@ -87,4 +90,5 @@ docs/
 README.md
 AGENTS.md
 openapi.yaml
+vercel.json
 ```

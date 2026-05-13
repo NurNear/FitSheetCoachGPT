@@ -13,9 +13,9 @@ export function createApp() {
 
   app.use(cors());
   app.use(express.json());
-  app.use(apiKeyAuth);
 
   app.use(healthRouter);
+  app.use(apiKeyAuth);
   app.use("/api/profile", profileRouter);
   app.use("/api/logs", logsRouter);
   app.use("/api/dashboard", dashboardRouter);

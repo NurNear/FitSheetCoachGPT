@@ -1,6 +1,6 @@
 # JSON File Storage
 
-FitSheet Coach GPT stores data in a local JSON file by default. This avoids Google Sheets credentials and keeps the API simple while the product is still in MVP shape.
+FitSheet Coach GPT can store data in a local JSON file for local development. Production on Vercel should use Upstash Redis instead.
 
 ## Environment
 
@@ -49,12 +49,4 @@ Do not commit personal health data or test user data.
 
 ## Deployment Note
 
-JSON file storage is best for local development or a single long-running server.
-
-For Vercel serverless deployment, the filesystem is not a durable database. Before production use on Vercel, move the storage implementation behind `StorageService` to a hosted NoSQL store such as:
-
-- Vercel KV
-- Upstash Redis
-- MongoDB Atlas
-- Firestore
-- Supabase
+JSON file storage is best for local development only. For Vercel deployment, use `STORAGE_DRIVER=upstash`.

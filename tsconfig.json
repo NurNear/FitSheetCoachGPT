@@ -11,6 +11,6 @@
     "rootDir": ".",
     "resolveJsonModule": true
   },
-  "include": ["src", "tests"],
+  "include": ["api", "src", "tests"],
   "exclude": ["node_modules", "dist"]
 }

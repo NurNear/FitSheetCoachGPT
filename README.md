@@ -1,6 +1,6 @@
 # FitSheet Coach GPT
 
-Middleware API for a Custom GPT personal trainer and health tracker. The API validates user input, normalizes food and exercise logs, stores data in a JSON file by default, and returns dashboard summaries for GPT Actions.
+Middleware API for a Custom GPT personal trainer and health tracker. The API validates user input, normalizes food and exercise logs, stores data in Upstash Redis for Vercel deployment, and returns dashboard summaries for GPT Actions.
 
 ## Architecture
 
@@ -8,11 +8,11 @@ Middleware API for a Custom GPT personal trainer and health tracker. The API val
 User
 -> Custom GPT
 -> Middleware API
--> JSON file storage
+-> Upstash Redis
 -> Dashboard summary
 ```
 
-The storage layer is abstracted behind `StorageService`, so the project can later migrate from JSON file storage to a hosted NoSQL database.
+The storage layer is abstracted behind `StorageService`, so the project can still use JSON file storage locally or migrate to another NoSQL backend later.
 
 ## Tech Stack
 
@@ -20,16 +20,18 @@ The storage layer is abstracted behind `StorageService`, so the project can late
 - TypeScript
 - Express.js
 - Zod
-- JSON file storage
+- Upstash Redis
+- Vercel Functions
 - OpenAPI 3.1
 - Vitest
 
 ## Current Status
 
 - REST API scaffold is implemented.
-- JSON file storage is the default.
+- Upstash Redis is the recommended storage for Vercel.
+- JSON file storage remains available for local-only development.
 - In-memory storage is available for temporary testing.
-- Google Sheets has been removed from the active requirement to reduce setup friction.
+- Google Sheets and Render persistent disk are no longer active requirements.
 
 ## Local Machine Constraint
 
@@ -47,6 +49,13 @@ Copy environment variables:
 
 ```bash
 cp .env.example .env
+```
+
+For local JSON-file testing, set:
+
+```env
+STORAGE_DRIVER=json
+DATA_FILE_PATH=./data/fitsheet.json
 ```
 
 Run the development server:
@@ -97,7 +106,16 @@ Run TypeScript checks without emitting files.
 
 See [.env.example](.env.example).
 
-Storage:
+Production storage:
+
+```env
+STORAGE_DRIVER=upstash
+UPSTASH_REDIS_REST_URL=
+UPSTASH_REDIS_REST_TOKEN=
+REDIS_KEY_PREFIX=fitsheet
+```
+
+Local JSON fallback:
 
 ```env
 STORAGE_DRIVER=json
@@ -112,15 +130,8 @@ API_KEY=
 
 ## Storage
 
-JSON file storage guide:
-
-[docs/json-storage.md](docs/json-storage.md)
-
-Default data file:
-
-```txt
-data/fitsheet.json
-```
+- Upstash Redis guide: [docs/vercel-deploy.md](docs/vercel-deploy.md)
+- Local JSON guide: [docs/json-storage.md](docs/json-storage.md)
 
 Runtime JSON files are ignored by git:
 
@@ -148,6 +159,8 @@ data/*.json
 ## Project Structure
 
 ```txt
+api/
+  index.ts
 src/
   app.ts
   server.ts
@@ -179,14 +192,16 @@ src/
 tests/
 docs/
 openapi.yaml
+vercel.json
 ```
 
 ## Structure Guidelines
 
+- `api/` owns the Vercel Function entrypoint.
 - `routes/` owns HTTP handlers and should stay thin.
 - `validators/` owns request validation with Zod.
 - `services/` owns business logic and integrations.
-- `storageService.ts` owns the storage abstraction and JSON file adapter.
+- `storageService.ts` owns the storage abstraction and adapters.
 - `types/` owns shared domain types.
 - `constants/` owns shared lookup tables.
 - `utils/` owns small generic helpers only.
@@ -200,29 +215,24 @@ Use [openapi.yaml](openapi.yaml) as the schema source for Custom GPT Actions.
 Before connecting a Custom GPT:
 
 1. Verify local build and tests.
-2. Run the API locally and write sample logs.
-3. Confirm `data/fitsheet.json` is updated.
-4. Deploy the API.
-5. Update the `servers` URL in `openapi.yaml` to the production URL.
-6. Import `openapi.yaml` into GPT Actions.
+2. Create or link Upstash Redis in Vercel.
+3. Deploy the API to Vercel.
+4. Update the `servers` URL in `openapi.yaml` to the production URL.
+5. Import `openapi.yaml` into GPT Actions.
 
 ## Deployment
 
-Recommended Render-first sequence:
+Recommended sequence:
 
 ```txt
-JSON storage setup
--> local API test
--> Render Blueprint deploy
--> Render persistent disk verification
+Upstash Redis setup
+-> local build/test
+-> Vercel deploy
+-> smoke test production API
 -> update OpenAPI production URL
 -> Custom GPT Actions
 ```
 
-Render deployment guide:
+Vercel deployment guide:
 
-[docs/render-deploy.md](docs/render-deploy.md)
-
-This repo includes [render.yaml](render.yaml). It configures a Node web service with a persistent disk mounted at `/var/data` and stores runtime JSON data at `/var/data/fitsheet.json`.
-
-Important: JSON file storage needs a persistent disk in production. On Render, persistent disks require a paid service and prevent scaling to multiple instances. For a larger production system, migrate `StorageService` to a hosted NoSQL option such as Render Key Value, Upstash Redis, MongoDB Atlas, Firestore, or Supabase.
+[docs/vercel-deploy.md](docs/vercel-deploy.md)

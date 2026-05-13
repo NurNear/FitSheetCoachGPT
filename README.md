@@ -21,6 +21,8 @@ cp .env.example .env
 
 For local development without Google credentials, the API runs with in-memory storage.
 
+Google Sheets setup guide: [docs/google-sheets-setup.md](docs/google-sheets-setup.md)
+
 ## Google Sheet Tabs
 
 Create these tabs with a header row before enabling Google credentials:

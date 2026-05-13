@@ -208,15 +208,21 @@ Before connecting a Custom GPT:
 
 ## Deployment
 
-Recommended local-first sequence:
+Recommended Render-first sequence:
 
 ```txt
 JSON storage setup
 -> local API test
--> choose production storage
--> deploy API
+-> Render Blueprint deploy
+-> Render persistent disk verification
 -> update OpenAPI production URL
 -> Custom GPT Actions
 ```
 
-Important: JSON file storage is not durable on Vercel serverless functions. For production on Vercel, migrate `StorageService` to a hosted NoSQL option such as Vercel KV, Upstash Redis, MongoDB Atlas, Firestore, or Supabase.
+Render deployment guide:
+
+[docs/render-deploy.md](docs/render-deploy.md)
+
+This repo includes [render.yaml](render.yaml). It configures a Node web service with a persistent disk mounted at `/var/data` and stores runtime JSON data at `/var/data/fitsheet.json`.
+
+Important: JSON file storage needs a persistent disk in production. On Render, persistent disks require a paid service and prevent scaling to multiple instances. For a larger production system, migrate `StorageService` to a hosted NoSQL option such as Render Key Value, Upstash Redis, MongoDB Atlas, Firestore, or Supabase.

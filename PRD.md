@@ -38,7 +38,7 @@ User
 
 ## Deployment
 
-- Render หรือ long-running Node server สำหรับ JSON file storage
+- Render พร้อม persistent disk สำหรับ JSON file storage
 - Vercel ใช้ได้สำหรับ API แต่ไม่ควรใช้ JSON file storage เป็น production storage เพราะ filesystem ไม่ durable
 
 ## Storage

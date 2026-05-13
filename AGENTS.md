@@ -114,8 +114,17 @@ Recommended order:
 
 ```txt
 local JSON storage verification
--> choose production storage
--> deploy API
+-> Render Blueprint deploy
+-> verify Render persistent disk behavior
 -> update openapi.yaml production server URL
 -> connect Custom GPT Actions
 ```
+
+The repo includes `render.yaml`. It deploys a Node web service with:
+
+```txt
+DATA_FILE_PATH=/var/data/fitsheet.json
+disk mountPath=/var/data
+```
+
+Do not change production JSON storage to a path outside the persistent disk mount unless the app has migrated to a hosted NoSQL backend.

@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { estimateBmr, estimateCalorieTarget, estimateExerciseCalories, estimateTdee } from "../src/services/fitnessService.js";
+import {
+  estimateBmr,
+  estimateCalorieTarget,
+  estimateExerciseCalories,
+  estimateFoodCalories,
+  estimateTdee
+} from "../src/services/fitnessService.js";
 import type { ProfileMetrics } from "../src/types/domain.js";
 
 const profile: ProfileMetrics = {
@@ -33,5 +39,18 @@ describe("fitnessService", () => {
         loggedAt: "2026-05-13T00:00:00.000Z"
       })
     ).toBe(120);
+  });
+
+  it("estimates food calories from macros when calories are not provided", () => {
+    expect(
+      estimateFoodCalories({
+        userId: "demo",
+        name: "Chicken rice",
+        proteinG: 35,
+        carbsG: 60,
+        fatG: 12,
+        loggedAt: "2026-05-13T00:00:00.000Z"
+      })
+    ).toBe(488);
   });
 });

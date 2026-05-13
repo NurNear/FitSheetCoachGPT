@@ -28,7 +28,11 @@ paths:
               $ref: "#/components/schemas/ProfileMetricsInput"
       responses:
         "201":
-          description: Saved profile metrics
+          description: Saved profile metrics with calculated targets
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileMetricsResponse"
   /api/logs/food:
     post:
       operationId: logFood
@@ -41,7 +45,11 @@ paths:
               $ref: "#/components/schemas/FoodLogInput"
       responses:
         "201":
-          description: Saved food log
+          description: Saved normalized food log
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FoodLogResponse"
   /api/logs/exercise:
     post:
       operationId: logExercise
@@ -54,7 +62,11 @@ paths:
               $ref: "#/components/schemas/ExerciseLogInput"
       responses:
         "201":
-          description: Saved exercise log
+          description: Saved normalized exercise log
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExerciseLogResponse"
   /api/logs/weight:
     post:
       operationId: logWeight
@@ -68,6 +80,10 @@ paths:
       responses:
         "201":
           description: Saved weight log
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeightLogResponse"
   /api/dashboard/summary:
     get:
       operationId: getDashboardSummary
@@ -210,3 +226,70 @@ components:
               type: number
             recommendation:
               type: string
+    ProfileMetricsResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        data:
+          type: object
+          properties:
+            profile:
+              allOf:
+                - $ref: "#/components/schemas/ProfileMetricsInput"
+                - type: object
+                  properties:
+                    loggedAt:
+                      type: string
+                      format: date-time
+            bmr:
+              type: number
+            tdee:
+              type: number
+            calorieTarget:
+              type: number
+    FoodLogResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        data:
+          allOf:
+            - $ref: "#/components/schemas/FoodLogInput"
+            - type: object
+              properties:
+                calories:
+                  type: number
+                  description: Provided calories or calories estimated from macros.
+                loggedAt:
+                  type: string
+                  format: date-time
+    ExerciseLogResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        data:
+          allOf:
+            - $ref: "#/components/schemas/ExerciseLogInput"
+            - type: object
+              properties:
+                caloriesBurned:
+                  type: number
+                  description: Provided calories or calories estimated from duration and intensity.
+                loggedAt:
+                  type: string
+                  format: date-time
+    WeightLogResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        data:
+          allOf:
+            - $ref: "#/components/schemas/WeightLogInput"
+            - type: object
+              properties:
+                loggedAt:
+                  type: string
+                  format: date-time

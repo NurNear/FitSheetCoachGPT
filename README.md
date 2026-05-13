@@ -39,6 +39,14 @@ Create these tabs with a header row before enabling Google credentials:
 - `POST /api/logs/weight`
 - `GET /api/dashboard/summary?userId=demo`
 
+## Normalization Rules
+
+- Food calories are preserved when provided.
+- If food calories are missing but macros exist, calories are estimated from `proteinG * 4 + carbsG * 4 + fatG * 9`.
+- Exercise calories are preserved when provided.
+- If exercise calories are missing, calories are estimated from duration and intensity.
+- Profile metrics return BMR, TDEE, and the daily calorie target immediately after saving.
+
 ## GPT Actions
 
 Use `openapi.yaml` as the schema source for Custom GPT Actions.

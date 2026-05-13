@@ -19,6 +19,19 @@ export function estimateCalorieTarget(profile: ProfileMetrics): number {
   return tdee;
 }
 
+export function estimateFoodCalories(log: FoodLog): number | undefined {
+  if (typeof log.calories === "number") return Math.round(log.calories);
+
+  const hasMacros =
+    typeof log.proteinG === "number" ||
+    typeof log.carbsG === "number" ||
+    typeof log.fatG === "number";
+
+  if (!hasMacros) return undefined;
+
+  return Math.round((log.proteinG ?? 0) * 4 + (log.carbsG ?? 0) * 4 + (log.fatG ?? 0) * 9);
+}
+
 export function estimateExerciseCalories(log: ExerciseLog): number {
   if (typeof log.caloriesBurned === "number") return Math.round(log.caloriesBurned);
 

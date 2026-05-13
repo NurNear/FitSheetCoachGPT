@@ -207,7 +207,7 @@ class UpstashRedisStorageService implements StorageService {
   }
 
   async getLatestProfile(userId: string): Promise<ProfileMetrics | undefined> {
-    const value = await this.redis.lindex<string>(this.userKey("profiles", userId), -1);
+    const value = await this.redis.lindex(this.userKey("profiles", userId), -1);
     return this.parseJson<ProfileMetrics>(value);
   }
 
@@ -220,7 +220,7 @@ class UpstashRedisStorageService implements StorageService {
   }
 
   async getLatestWeight(userId: string): Promise<WeightLog | undefined> {
-    const value = await this.redis.lindex<string>(this.userKey("weights", userId), -1);
+    const value = await this.redis.lindex(this.userKey("weights", userId), -1);
     return this.parseJson<WeightLog>(value);
   }
 
@@ -229,16 +229,17 @@ class UpstashRedisStorageService implements StorageService {
   }
 
   private async getList<T>(key: string): Promise<T[]> {
-    const values = await this.redis.lrange<string>(key, 0, -1);
+    const values = await this.redis.lrange(key, 0, -1);
     return values.flatMap((value) => {
       const parsed = this.parseJson<T>(value);
       return parsed ? [parsed] : [];
     });
   }
 
-  private parseJson<T>(value: string | null): T | undefined {
+  private parseJson<T>(value: unknown): T | undefined {
     if (!value) return undefined;
-    return JSON.parse(value) as T;
+    if (typeof value === "string") return JSON.parse(value) as T;
+    return value as T;
   }
 
   private userKey(collection: string, userId: string): string {

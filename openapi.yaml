@@ -1,0 +1,212 @@
+openapi: 3.1.0
+info:
+  title: FitSheet Coach GPT API
+  version: 0.1.0
+  description: Middleware API for Custom GPT health tracking actions.
+servers:
+  - url: http://localhost:3000
+security:
+  - ApiKeyAuth: []
+paths:
+  /health:
+    get:
+      operationId: healthCheck
+      summary: Check API health
+      security: []
+      responses:
+        "200":
+          description: API is healthy
+  /api/profile/metrics:
+    post:
+      operationId: saveProfileMetrics
+      summary: Save user profile metrics for BMR and TDEE calculations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileMetricsInput"
+      responses:
+        "201":
+          description: Saved profile metrics
+  /api/logs/food:
+    post:
+      operationId: logFood
+      summary: Log food intake
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FoodLogInput"
+      responses:
+        "201":
+          description: Saved food log
+  /api/logs/exercise:
+    post:
+      operationId: logExercise
+      summary: Log exercise
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExerciseLogInput"
+      responses:
+        "201":
+          description: Saved exercise log
+  /api/logs/weight:
+    post:
+      operationId: logWeight
+      summary: Log body weight
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WeightLogInput"
+      responses:
+        "201":
+          description: Saved weight log
+  /api/dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      summary: Get daily dashboard summary
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: date
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: "^\\d{4}-\\d{2}-\\d{2}$"
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummaryResponse"
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+  schemas:
+    ProfileMetricsInput:
+      type: object
+      required: [userId, sex, age, heightCm, weightKg, activityLevel]
+      properties:
+        userId:
+          type: string
+        sex:
+          type: string
+          enum: [male, female]
+        age:
+          type: integer
+          minimum: 10
+          maximum: 120
+        heightCm:
+          type: number
+          minimum: 1
+        weightKg:
+          type: number
+          minimum: 1
+        activityLevel:
+          type: string
+          enum: [sedentary, light, moderate, active, very_active]
+        goal:
+          type: string
+          enum: [lose_fat, maintain, gain_muscle]
+        loggedAt:
+          type: string
+          format: date-time
+    FoodLogInput:
+      type: object
+      required: [userId, name]
+      properties:
+        userId:
+          type: string
+        name:
+          type: string
+        quantity:
+          type: string
+        calories:
+          type: number
+          minimum: 0
+        proteinG:
+          type: number
+          minimum: 0
+        carbsG:
+          type: number
+          minimum: 0
+        fatG:
+          type: number
+          minimum: 0
+        mealType:
+          type: string
+          enum: [breakfast, lunch, dinner, snack]
+        loggedAt:
+          type: string
+          format: date-time
+    ExerciseLogInput:
+      type: object
+      required: [userId, name, durationMinutes]
+      properties:
+        userId:
+          type: string
+        name:
+          type: string
+        durationMinutes:
+          type: number
+          minimum: 1
+        caloriesBurned:
+          type: number
+          minimum: 0
+        intensity:
+          type: string
+          enum: [low, moderate, high]
+        loggedAt:
+          type: string
+          format: date-time
+    WeightLogInput:
+      type: object
+      required: [userId, weightKg]
+      properties:
+        userId:
+          type: string
+        weightKg:
+          type: number
+          minimum: 1
+        loggedAt:
+          type: string
+          format: date-time
+    DashboardSummaryResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        data:
+          type: object
+          properties:
+            userId:
+              type: string
+            date:
+              type: string
+            totals:
+              type: object
+            latestWeightKg:
+              type: number
+            bmr:
+              type: number
+            tdee:
+              type: number
+            calorieTarget:
+              type: number
+            recommendation:
+              type: string

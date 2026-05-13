@@ -11,6 +11,10 @@ npm run dev
 
 The API runs on `http://localhost:3000` by default.
 
+## Local Machine Constraint
+
+If a task requires running Node.js or npm commands on this machine, the user should run the command directly. The assistant will provide the exact command to run instead of executing it.
+
 ## Environment
 
 Copy `.env.example` to `.env` and fill in Google Sheets credentials when ready.

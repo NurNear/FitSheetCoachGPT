@@ -8,7 +8,8 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "test": "vitest run",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "sheets:check": "tsx src/scripts/checkGoogleSheets.ts"
   },
   "dependencies": {
     "cors": "^2.8.5",

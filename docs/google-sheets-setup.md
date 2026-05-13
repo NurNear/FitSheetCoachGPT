@@ -80,6 +80,12 @@ Keep the `\n` sequences in the private key. The API converts them to real newlin
 
 ## 6. Verify Locally
 
+Check spreadsheet access and headers:
+
+```bash
+npm run sheets:check
+```
+
 Start the API:
 
 ```bash

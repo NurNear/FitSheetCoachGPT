@@ -23,6 +23,12 @@ For local development without Google credentials, the API runs with in-memory st
 
 Google Sheets setup guide: [docs/google-sheets-setup.md](docs/google-sheets-setup.md)
 
+After adding Google credentials to `.env`, verify the connection:
+
+```bash
+npm run sheets:check
+```
+
 ## Google Sheet Tabs
 
 Create these tabs with a header row before enabling Google credentials:

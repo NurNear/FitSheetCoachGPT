@@ -1,6 +1,6 @@
 # FitSheet Coach GPT
 
-Middleware API for a Custom GPT personal trainer and health tracker. The API validates user input, normalizes food and exercise logs, writes data to Google Sheets, and returns dashboard summaries for GPT Actions.
+Middleware API for a Custom GPT personal trainer and health tracker. The API validates user input, normalizes food and exercise logs, stores data in a JSON file by default, and returns dashboard summaries for GPT Actions.
 
 ## Architecture
 
@@ -8,9 +8,11 @@ Middleware API for a Custom GPT personal trainer and health tracker. The API val
 User
 -> Custom GPT
 -> Middleware API
--> Google Sheets
+-> JSON file storage
 -> Dashboard summary
 ```
+
+The storage layer is abstracted behind `StorageService`, so the project can later migrate from JSON file storage to a hosted NoSQL database.
 
 ## Tech Stack
 
@@ -18,17 +20,16 @@ User
 - TypeScript
 - Express.js
 - Zod
-- Google Sheets API
+- JSON file storage
 - OpenAPI 3.1
 - Vitest
 
 ## Current Status
 
 - REST API scaffold is implemented.
-- Google Sheet file has been created.
-- Google Sheets setup guide is available.
-- In-memory storage is used when Google credentials are missing.
-- Google Sheets storage is used when all required credentials are present.
+- JSON file storage is the default.
+- In-memory storage is available for temporary testing.
+- Google Sheets has been removed from the active requirement to reduce setup friction.
 
 ## Local Machine Constraint
 
@@ -92,22 +93,15 @@ npm run lint
 
 Run TypeScript checks without emitting files.
 
-```bash
-npm run sheets:check
-```
-
-Verify Google Sheets credentials, required tabs, and header rows.
-
 ## Environment Variables
 
 See [.env.example](.env.example).
 
-Required for Google Sheets mode:
+Storage:
 
 ```env
-GOOGLE_SHEET_ID=1u8-jhWnVB_xLjOeboR-HkEj8gh9umYYC0cNSDRtrqFQ
-GOOGLE_SERVICE_ACCOUNT_EMAIL=
-GOOGLE_PRIVATE_KEY=
+STORAGE_DRIVER=json
+DATA_FILE_PATH=./data/fitsheet.json
 ```
 
 Optional API protection:
@@ -116,38 +110,22 @@ Optional API protection:
 API_KEY=
 ```
 
-Sheet tab names:
+## Storage
 
-```env
-FOOD_LOG_SHEET=FoodLog
-EXERCISE_LOG_SHEET=ExerciseLog
-WEIGHT_LOG_SHEET=WeightLog
-PROFILE_SHEET=Profile
-```
+JSON file storage guide:
 
-## Google Sheets
+[docs/json-storage.md](docs/json-storage.md)
 
-Setup guide:
-
-[docs/google-sheets-setup.md](docs/google-sheets-setup.md)
-
-Spreadsheet:
+Default data file:
 
 ```txt
-https://docs.google.com/spreadsheets/d/1u8-jhWnVB_xLjOeboR-HkEj8gh9umYYC0cNSDRtrqFQ/edit
+data/fitsheet.json
 ```
 
-Required tabs and headers:
+Runtime JSON files are ignored by git:
 
-- `Profile`: `userId, sex, age, heightCm, weightKg, activityLevel, goal, loggedAt`
-- `FoodLog`: `userId, name, quantity, calories, proteinG, carbsG, fatG, mealType, loggedAt`
-- `ExerciseLog`: `userId, name, durationMinutes, caloriesBurned, intensity, loggedAt`
-- `WeightLog`: `userId, weightKg, loggedAt`
-
-After adding Google credentials to `.env`, verify the connection:
-
-```bash
-npm run sheets:check
+```txt
+data/*.json
 ```
 
 ## API Endpoints
@@ -177,7 +155,6 @@ src/
     env.ts
   constants/
     activity.ts
-    sheets.ts
   middleware/
     apiKey.ts
     errorHandler.ts
@@ -187,8 +164,6 @@ src/
     health.ts
     logs.ts
     profile.ts
-  scripts/
-    checkGoogleSheets.ts
   services/
     dashboardService.ts
     fitnessService.ts
@@ -211,11 +186,10 @@ openapi.yaml
 - `routes/` owns HTTP handlers and should stay thin.
 - `validators/` owns request validation with Zod.
 - `services/` owns business logic and integrations.
-- `storageService.ts` owns the storage abstraction and Google Sheets adapter.
+- `storageService.ts` owns the storage abstraction and JSON file adapter.
 - `types/` owns shared domain types.
-- `constants/` owns shared lookup tables and stable schema constants.
+- `constants/` owns shared lookup tables.
 - `utils/` owns small generic helpers only.
-- `scripts/` owns operational scripts run with npm.
 - `docs/` owns setup and operational documentation.
 - `openapi.yaml` is the source for Custom GPT Actions.
 
@@ -226,34 +200,23 @@ Use [openapi.yaml](openapi.yaml) as the schema source for Custom GPT Actions.
 Before connecting a Custom GPT:
 
 1. Verify local build and tests.
-2. Verify Google Sheets access with `npm run sheets:check`.
-3. Deploy the API.
-4. Update the `servers` URL in `openapi.yaml` to the production URL.
-5. Import `openapi.yaml` into GPT Actions.
+2. Run the API locally and write sample logs.
+3. Confirm `data/fitsheet.json` is updated.
+4. Deploy the API.
+5. Update the `servers` URL in `openapi.yaml` to the production URL.
+6. Import `openapi.yaml` into GPT Actions.
 
 ## Deployment
 
-Recommended sequence:
+Recommended local-first sequence:
 
 ```txt
-Google Sheets setup
--> local .env
--> npm run sheets:check
+JSON storage setup
 -> local API test
--> Vercel project
--> Vercel environment variables
--> deploy
+-> choose production storage
+-> deploy API
 -> update OpenAPI production URL
 -> Custom GPT Actions
 ```
 
-Vercel environment variables should match local `.env` values, especially:
-
-- `API_KEY`
-- `GOOGLE_SHEET_ID`
-- `GOOGLE_SERVICE_ACCOUNT_EMAIL`
-- `GOOGLE_PRIVATE_KEY`
-- `FOOD_LOG_SHEET`
-- `EXERCISE_LOG_SHEET`
-- `WEIGHT_LOG_SHEET`
-- `PROFILE_SHEET`
+Important: JSON file storage is not durable on Vercel serverless functions. For production on Vercel, migrate `StorageService` to a hosted NoSQL option such as Vercel KV, Upstash Redis, MongoDB Atlas, Firestore, or Supabase.

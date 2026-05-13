@@ -1,5 +1,6 @@
-import { google } from "googleapis";
-import { env, hasGoogleSheetsConfig } from "../config/env.js";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { dirname, resolve } from "node:path";
+import { env } from "../config/env.js";
 import type { ExerciseLog, FoodLog, ProfileMetrics, WeightLog } from "../types/domain.js";
 
 export interface StorageService {
@@ -13,222 +14,169 @@ export interface StorageService {
   getLatestWeight(userId: string): Promise<WeightLog | undefined>;
 }
 
+interface DataStore {
+  schemaVersion: 1;
+  profiles: ProfileMetrics[];
+  foods: FoodLog[];
+  exercises: ExerciseLog[];
+  weights: WeightLog[];
+}
+
+function emptyStore(): DataStore {
+  return {
+    schemaVersion: 1,
+    profiles: [],
+    foods: [],
+    exercises: [],
+    weights: []
+  };
+}
+
 function sameDate(loggedAt: string, date: string): boolean {
   return loggedAt.slice(0, 10) === date;
 }
 
+function normalizeStore(value: unknown): DataStore {
+  if (!value || typeof value !== "object") return emptyStore();
+
+  const record = value as Partial<DataStore>;
+  return {
+    schemaVersion: 1,
+    profiles: Array.isArray(record.profiles) ? record.profiles : [],
+    foods: Array.isArray(record.foods) ? record.foods : [],
+    exercises: Array.isArray(record.exercises) ? record.exercises : [],
+    weights: Array.isArray(record.weights) ? record.weights : []
+  };
+}
+
 class MemoryStorageService implements StorageService {
-  private profiles: ProfileMetrics[] = [];
-  private foods: FoodLog[] = [];
-  private exercises: ExerciseLog[] = [];
-  private weights: WeightLog[] = [];
+  private store = emptyStore();
 
   async saveProfile(profile: ProfileMetrics): Promise<ProfileMetrics> {
-    this.profiles.push(profile);
+    this.store.profiles.push(profile);
     return profile;
   }
 
   async saveFood(log: FoodLog): Promise<FoodLog> {
-    this.foods.push(log);
+    this.store.foods.push(log);
     return log;
   }
 
   async saveExercise(log: ExerciseLog): Promise<ExerciseLog> {
-    this.exercises.push(log);
+    this.store.exercises.push(log);
     return log;
   }
 
   async saveWeight(log: WeightLog): Promise<WeightLog> {
-    this.weights.push(log);
+    this.store.weights.push(log);
     return log;
   }
 
   async getLatestProfile(userId: string): Promise<ProfileMetrics | undefined> {
-    return this.profiles.filter((profile) => profile.userId === userId).at(-1);
+    return this.store.profiles.filter((profile) => profile.userId === userId).at(-1);
   }
 
   async getFoodLogs(userId: string, date: string): Promise<FoodLog[]> {
-    return this.foods.filter((food) => food.userId === userId && sameDate(food.loggedAt, date));
+    return this.store.foods.filter((food) => food.userId === userId && sameDate(food.loggedAt, date));
   }
 
   async getExerciseLogs(userId: string, date: string): Promise<ExerciseLog[]> {
-    return this.exercises.filter((exercise) => exercise.userId === userId && sameDate(exercise.loggedAt, date));
+    return this.store.exercises.filter((exercise) => exercise.userId === userId && sameDate(exercise.loggedAt, date));
   }
 
   async getLatestWeight(userId: string): Promise<WeightLog | undefined> {
-    return this.weights.filter((weight) => weight.userId === userId).at(-1);
+    return this.store.weights.filter((weight) => weight.userId === userId).at(-1);
   }
 }
 
-class GoogleSheetsStorageService implements StorageService {
-  private sheets = google.sheets("v4");
-
-  private auth = new google.auth.JWT({
-    email: env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-    key: env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-    scopes: ["https://www.googleapis.com/auth/spreadsheets"]
-  });
+class JsonFileStorageService implements StorageService {
+  private readonly filePath = resolve(env.DATA_FILE_PATH);
+  private writeQueue: Promise<void> = Promise.resolve();
 
   async saveProfile(profile: ProfileMetrics): Promise<ProfileMetrics> {
-    await this.append(env.PROFILE_SHEET, [
-      profile.userId,
-      profile.sex,
-      profile.age,
-      profile.heightCm,
-      profile.weightKg,
-      profile.activityLevel,
-      profile.goal ?? "",
-      profile.loggedAt
-    ]);
-    return profile;
+    return this.updateStore((store) => {
+      store.profiles.push(profile);
+      return profile;
+    });
   }
 
   async saveFood(log: FoodLog): Promise<FoodLog> {
-    await this.append(env.FOOD_LOG_SHEET, [
-      log.userId,
-      log.name,
-      log.quantity ?? "",
-      log.calories ?? "",
-      log.proteinG ?? "",
-      log.carbsG ?? "",
-      log.fatG ?? "",
-      log.mealType ?? "",
-      log.loggedAt
-    ]);
-    return log;
+    return this.updateStore((store) => {
+      store.foods.push(log);
+      return log;
+    });
   }
 
   async saveExercise(log: ExerciseLog): Promise<ExerciseLog> {
-    await this.append(env.EXERCISE_LOG_SHEET, [
-      log.userId,
-      log.name,
-      log.durationMinutes,
-      log.caloriesBurned ?? "",
-      log.intensity ?? "",
-      log.loggedAt
-    ]);
-    return log;
+    return this.updateStore((store) => {
+      store.exercises.push(log);
+      return log;
+    });
   }
 
   async saveWeight(log: WeightLog): Promise<WeightLog> {
-    await this.append(env.WEIGHT_LOG_SHEET, [log.userId, log.weightKg, log.loggedAt]);
-    return log;
+    return this.updateStore((store) => {
+      store.weights.push(log);
+      return log;
+    });
   }
 
-  async getLatestProfile(_userId: string): Promise<ProfileMetrics | undefined> {
-    const rows = await this.getRows(env.PROFILE_SHEET);
-    return rows
-      .map((row) => this.parseProfile(row))
-      .filter((profile): profile is ProfileMetrics => profile !== undefined && profile.userId === _userId)
-      .at(-1);
+  async getLatestProfile(userId: string): Promise<ProfileMetrics | undefined> {
+    const store = await this.readStore();
+    return store.profiles.filter((profile) => profile.userId === userId).at(-1);
   }
 
-  async getFoodLogs(_userId: string, _date: string): Promise<FoodLog[]> {
-    const rows = await this.getRows(env.FOOD_LOG_SHEET);
-    return rows
-      .map((row) => this.parseFood(row))
-      .filter((food): food is FoodLog => food !== undefined && food.userId === _userId && sameDate(food.loggedAt, _date));
+  async getFoodLogs(userId: string, date: string): Promise<FoodLog[]> {
+    const store = await this.readStore();
+    return store.foods.filter((food) => food.userId === userId && sameDate(food.loggedAt, date));
   }
 
-  async getExerciseLogs(_userId: string, _date: string): Promise<ExerciseLog[]> {
-    const rows = await this.getRows(env.EXERCISE_LOG_SHEET);
-    return rows
-      .map((row) => this.parseExercise(row))
-      .filter(
-        (exercise): exercise is ExerciseLog =>
-          exercise !== undefined && exercise.userId === _userId && sameDate(exercise.loggedAt, _date)
-      );
+  async getExerciseLogs(userId: string, date: string): Promise<ExerciseLog[]> {
+    const store = await this.readStore();
+    return store.exercises.filter((exercise) => exercise.userId === userId && sameDate(exercise.loggedAt, date));
   }
 
-  async getLatestWeight(_userId: string): Promise<WeightLog | undefined> {
-    const rows = await this.getRows(env.WEIGHT_LOG_SHEET);
-    return rows
-      .map((row) => this.parseWeight(row))
-      .filter((weight): weight is WeightLog => weight !== undefined && weight.userId === _userId)
-      .at(-1);
+  async getLatestWeight(userId: string): Promise<WeightLog | undefined> {
+    const store = await this.readStore();
+    return store.weights.filter((weight) => weight.userId === userId).at(-1);
   }
 
-  private async append(sheetName: string, values: unknown[]): Promise<void> {
-    await this.sheets.spreadsheets.values.append({
-      auth: this.auth,
-      spreadsheetId: env.GOOGLE_SHEET_ID,
-      range: `${sheetName}!A:Z`,
-      valueInputOption: "USER_ENTERED",
-      requestBody: {
-        values: [values]
+  private async updateStore<T>(updater: (store: DataStore) => T): Promise<T> {
+    let result: T | undefined;
+
+    const operation = this.writeQueue.then(async () => {
+      const store = await this.readStore();
+      result = updater(store);
+      await this.writeStore(store);
+    });
+
+    this.writeQueue = operation.then(
+      () => undefined,
+      () => undefined
+    );
+
+    await operation;
+    return result as T;
+  }
+
+  private async readStore(): Promise<DataStore> {
+    try {
+      const raw = await readFile(this.filePath, "utf8");
+      return normalizeStore(JSON.parse(raw));
+    } catch (error) {
+      if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") {
+        return emptyStore();
       }
-    });
+
+      throw error;
+    }
   }
 
-  private async getRows(sheetName: string): Promise<string[][]> {
-    const response = await this.sheets.spreadsheets.values.get({
-      auth: this.auth,
-      spreadsheetId: env.GOOGLE_SHEET_ID,
-      range: `${sheetName}!A2:Z`
-    });
-
-    return (response.data.values ?? []) as string[][];
-  }
-
-  private parseProfile(row: string[]): ProfileMetrics | undefined {
-    const [userId, sex, age, heightCm, weightKg, activityLevel, goal, loggedAt] = row;
-    if (!userId || !loggedAt) return undefined;
-
-    return {
-      userId,
-      sex: sex as ProfileMetrics["sex"],
-      age: Number(age),
-      heightCm: Number(heightCm),
-      weightKg: Number(weightKg),
-      activityLevel: activityLevel as ProfileMetrics["activityLevel"],
-      goal: goal ? (goal as ProfileMetrics["goal"]) : undefined,
-      loggedAt
-    };
-  }
-
-  private parseFood(row: string[]): FoodLog | undefined {
-    const [userId, name, quantity, calories, proteinG, carbsG, fatG, mealType, loggedAt] = row;
-    if (!userId || !name || !loggedAt) return undefined;
-
-    return {
-      userId,
-      name,
-      quantity: quantity || undefined,
-      calories: calories ? Number(calories) : undefined,
-      proteinG: proteinG ? Number(proteinG) : undefined,
-      carbsG: carbsG ? Number(carbsG) : undefined,
-      fatG: fatG ? Number(fatG) : undefined,
-      mealType: mealType ? (mealType as FoodLog["mealType"]) : undefined,
-      loggedAt
-    };
-  }
-
-  private parseExercise(row: string[]): ExerciseLog | undefined {
-    const [userId, name, durationMinutes, caloriesBurned, intensity, loggedAt] = row;
-    if (!userId || !name || !durationMinutes || !loggedAt) return undefined;
-
-    return {
-      userId,
-      name,
-      durationMinutes: Number(durationMinutes),
-      caloriesBurned: caloriesBurned ? Number(caloriesBurned) : undefined,
-      intensity: intensity ? (intensity as ExerciseLog["intensity"]) : undefined,
-      loggedAt
-    };
-  }
-
-  private parseWeight(row: string[]): WeightLog | undefined {
-    const [userId, weightKg, loggedAt] = row;
-    if (!userId || !weightKg || !loggedAt) return undefined;
-
-    return {
-      userId,
-      weightKg: Number(weightKg),
-      loggedAt
-    };
+  private async writeStore(store: DataStore): Promise<void> {
+    await mkdir(dirname(this.filePath), { recursive: true });
+    await writeFile(this.filePath, `${JSON.stringify(store, null, 2)}\n`, "utf8");
   }
 }
 
-export const storage: StorageService = hasGoogleSheetsConfig
-  ? new GoogleSheetsStorageService()
-  : new MemoryStorageService();
+export const storage: StorageService =
+  env.STORAGE_DRIVER === "memory" ? new MemoryStorageService() : new JsonFileStorageService();

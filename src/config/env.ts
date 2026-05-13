@@ -5,18 +5,8 @@ const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().int().positive().default(3000),
   API_KEY: z.string().optional(),
-  GOOGLE_SHEET_ID: z.string().optional(),
-  GOOGLE_SERVICE_ACCOUNT_EMAIL: z.string().optional(),
-  GOOGLE_PRIVATE_KEY: z.string().optional(),
-  FOOD_LOG_SHEET: z.string().default("FoodLog"),
-  EXERCISE_LOG_SHEET: z.string().default("ExerciseLog"),
-  WEIGHT_LOG_SHEET: z.string().default("WeightLog"),
-  PROFILE_SHEET: z.string().default("Profile")
+  STORAGE_DRIVER: z.enum(["json", "memory"]).default("json"),
+  DATA_FILE_PATH: z.string().default("./data/fitsheet.json")
 });
 
 export const env = envSchema.parse(process.env);
-
-export const hasGoogleSheetsConfig =
-  Boolean(env.GOOGLE_SHEET_ID) &&
-  Boolean(env.GOOGLE_SERVICE_ACCOUNT_EMAIL) &&
-  Boolean(env.GOOGLE_PRIVATE_KEY);

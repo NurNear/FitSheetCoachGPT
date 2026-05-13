@@ -4,7 +4,7 @@ This file describes how coding agents should work in this repository.
 
 ## Project Purpose
 
-FitSheet Coach GPT is a TypeScript Express middleware API for a Custom GPT personal trainer. It validates requests, normalizes health data, stores logs in Google Sheets, and exposes summary endpoints for GPT Actions.
+FitSheet Coach GPT is a TypeScript Express middleware API for a Custom GPT personal trainer. It validates requests, normalizes health data, stores logs in JSON file storage by default, and exposes summary endpoints for GPT Actions.
 
 ## Local Constraint
 
@@ -15,7 +15,6 @@ Examples:
 ```bash
 npm run build
 npm test
-npm run sheets:check
 npm run dev
 ```
 
@@ -29,7 +28,6 @@ src/
   constants/
   middleware/
   routes/
-  scripts/
   services/
   types/
   utils/
@@ -44,11 +42,10 @@ openapi.yaml
 - `src/app.ts`: Express app composition.
 - `src/server.ts`: runtime server entrypoint.
 - `src/config/`: environment parsing and config.
-- `src/constants/`: stable lookup tables and shared schema constants.
+- `src/constants/`: stable lookup tables.
 - `src/middleware/`: Express middleware only.
 - `src/routes/`: route handlers. Keep these thin.
 - `src/services/`: business logic and external integrations.
-- `src/scripts/`: operational scripts run through npm.
 - `src/types/`: shared domain types.
 - `src/utils/`: small framework-agnostic helpers.
 - `src/validators/`: Zod request schemas.
@@ -61,39 +58,35 @@ openapi.yaml
 - Keep route handlers focused on parsing, calling services, and returning responses.
 - Put validation in `validators/`, not inline in routes.
 - Put reusable business logic in `services/`.
-- Keep Google Sheets details behind the storage service abstraction.
+- Keep persistence details behind the storage service abstraction.
 - Keep domain types in `types/domain.ts` unless the domain grows enough to split.
 - Prefer small, explicit functions over broad utility modules.
-- Do not commit `.env`, credentials, generated secrets, `node_modules/`, or `dist/`.
+- Do not commit `.env`, credentials, generated secrets, `node_modules/`, `dist/`, or runtime JSON data.
 - Update `openapi.yaml` whenever endpoint behavior or response shape changes.
 - Update README or docs when setup steps change.
 
-## Google Sheets Contract
+## Storage Contract
 
-Required spreadsheet ID for the current project:
+Default storage:
 
-```txt
-1u8-jhWnVB_xLjOeboR-HkEj8gh9umYYC0cNSDRtrqFQ
+```env
+STORAGE_DRIVER=json
+DATA_FILE_PATH=./data/fitsheet.json
 ```
 
-Required tabs:
+Runtime data shape:
 
-- `Profile`
-- `FoodLog`
-- `ExerciseLog`
-- `WeightLog`
-
-Header definitions live in:
-
-```txt
-src/constants/sheets.ts
+```json
+{
+  "schemaVersion": 1,
+  "profiles": [],
+  "foods": [],
+  "exercises": [],
+  "weights": []
+}
 ```
 
-After Google credentials are configured, ask the user to run:
-
-```bash
-npm run sheets:check
-```
+JSON file storage is acceptable for local development and MVP testing. It is not durable on Vercel serverless deployment. For production, preserve the `StorageService` interface and replace the adapter with a hosted NoSQL backend.
 
 ## Verification
 
@@ -104,11 +97,7 @@ npm run build
 npm test
 ```
 
-If Google Sheets behavior changes, also ask for:
-
-```bash
-npm run sheets:check
-```
+If storage behavior changes, also ask the user to run the API locally and verify that `data/fitsheet.json` is updated after sample requests.
 
 ## Git Workflow
 
@@ -119,16 +108,14 @@ npm run sheets:check
 
 ## Deployment Notes
 
-Deploy only after local build, tests, and Google Sheets verification pass.
+Deploy only after local build, tests, and local API storage verification pass.
 
 Recommended order:
 
 ```txt
-Google Sheets setup
--> local verification
--> Vercel project
--> Vercel environment variables
--> deploy
+local JSON storage verification
+-> choose production storage
+-> deploy API
 -> update openapi.yaml production server URL
 -> connect Custom GPT Actions
 ```

@@ -6,13 +6,16 @@
 
 Architecture:
 
+```txt
 User
 → Custom GPT
 → Middleware API
-→ Google Sheets
-→ Dashboard
+→ JSON file storage
+→ Dashboard summary
+```
 
 ระบบต้องรองรับ:
+
 - Food logging
 - Exercise logging
 - Weight tracking
@@ -31,15 +34,17 @@ User
 - TypeScript
 - Express.js
 - Zod
-- Google Sheets API
+- JSON file storage
 
 ## Deployment
 
-- Vercel or Render
+- Render หรือ long-running Node server สำหรับ JSON file storage
+- Vercel ใช้ได้สำหรับ API แต่ไม่ควรใช้ JSON file storage เป็น production storage เพราะ filesystem ไม่ durable
 
 ## Storage
 
-- Google Sheets
+- Default: JSON file storage
+- Optional future migration: NoSQL backend เช่น Vercel KV, Upstash Redis, MongoDB Atlas, Firestore, หรือ Supabase
 
 ## API Style
 
@@ -53,10 +58,10 @@ User
 
 1. GPT สามารถเรียก API ได้ผ่าน GPT Actions
 2. Middleware API validate และ normalize data
-3. Backend เขียนข้อมูลลง Google Sheets
+3. Backend เขียนข้อมูลลง JSON file ผ่าน storage abstraction
 4. มี business logic สำหรับ calories/BMR/TDEE
 5. มี dashboard endpoint
-6. Future-proof สำหรับ migration ไป database จริง
+6. Future-proof สำหรับ migration ไป NoSQL/database จริง
 
 ---
 
@@ -72,12 +77,14 @@ src/
   utils/
   validators/
   types/
-  openapi/
   app.ts
   server.ts
 
 tests/
+docs/
 
 .env.example
 README.md
+AGENTS.md
 openapi.yaml
+```

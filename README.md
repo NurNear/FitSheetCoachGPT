@@ -1,6 +1,6 @@
 # FitSheet Coach GPT
 
-Middleware API for a Custom GPT personal trainer and health tracker. The API validates user input, normalizes food and exercise logs, stores data in Upstash Redis for Vercel deployment, and returns dashboard summaries for GPT Actions.
+FitSheet Coach GPT is a TypeScript Express middleware API for a Custom GPT personal trainer. It validates requests, normalizes health data, stores logs through a storage abstraction, and exposes summary endpoints that GPT Actions can call.
 
 ## Architecture
 
@@ -12,13 +12,13 @@ User
 -> Dashboard summary
 ```
 
-The storage layer is abstracted behind `StorageService`, so the project can still use JSON file storage locally or migrate to another NoSQL backend later.
+Storage is Upstash Redis for Vercel deployment. Temporary local testing can use the in-memory driver.
 
 ## Tech Stack
 
-- Node.js
+- Node.js 20+
 - TypeScript
-- Express.js
+- Express
 - Zod
 - Upstash Redis
 - Vercel Functions
@@ -27,15 +27,15 @@ The storage layer is abstracted behind `StorageService`, so the project can stil
 
 ## Current Status
 
-- REST API scaffold is implemented.
-- Upstash Redis is the recommended storage for Vercel.
-- JSON file storage remains available for local-only development.
-- In-memory storage is available for temporary testing.
-- Google Sheets and Render persistent disk are no longer active requirements.
+- Core API scaffold is implemented.
+- Profile, food, exercise, weight, health, and dashboard summary endpoints exist.
+- Upstash Redis is the persistent storage driver.
+- Local JSON file storage has been removed.
+- Browser UI is not implemented yet; see `docs/UI_SPEC.md` for the planned UI.
 
 ## Local Machine Constraint
 
-If a task requires running Node.js or npm commands on this machine, the user should run the command directly. The assistant will provide the exact command to run instead of executing it.
+Coding agents should not run Node.js or npm commands from the assistant environment unless the user explicitly asks and the environment supports it. When verification is needed, agents should provide the exact command for the user to run.
 
 ## Quick Start
 
@@ -51,11 +51,13 @@ Copy environment variables:
 cp .env.example .env
 ```
 
-For local JSON-file testing, set:
+For persistent storage, set:
 
 ```env
-STORAGE_DRIVER=json
-DATA_FILE_PATH=./data/fitsheet.json
+STORAGE_DRIVER=upstash
+UPSTASH_REDIS_REST_URL=
+UPSTASH_REDIS_REST_TOKEN=
+REDIS_KEY_PREFIX=fitsheet
 ```
 
 Run the development server:
@@ -64,7 +66,7 @@ Run the development server:
 npm run dev
 ```
 
-The API runs on:
+The API runs at:
 
 ```txt
 http://localhost:3000
@@ -74,39 +76,15 @@ http://localhost:3000
 
 ```bash
 npm run dev
-```
-
-Run the API locally with file watching.
-
-```bash
 npm run build
-```
-
-Compile TypeScript to `dist/`.
-
-```bash
 npm start
-```
-
-Run the compiled server from `dist/server.js`.
-
-```bash
 npm test
-```
-
-Run the Vitest test suite.
-
-```bash
 npm run lint
 ```
 
-Run TypeScript checks without emitting files.
-
 ## Environment Variables
 
-See [.env.example](.env.example).
-
-Production storage:
+Persistent storage:
 
 ```env
 STORAGE_DRIVER=upstash
@@ -115,28 +93,16 @@ UPSTASH_REDIS_REST_TOKEN=
 REDIS_KEY_PREFIX=fitsheet
 ```
 
-Local JSON fallback:
+Temporary local testing without persistence:
 
 ```env
-STORAGE_DRIVER=json
-DATA_FILE_PATH=./data/fitsheet.json
+STORAGE_DRIVER=memory
 ```
 
 Optional API protection:
 
 ```env
 API_KEY=
-```
-
-## Storage
-
-- Upstash Redis guide: [docs/vercel-deploy.md](docs/vercel-deploy.md)
-- Local JSON guide: [docs/json-storage.md](docs/json-storage.md)
-
-Runtime JSON files are ignored by git:
-
-```txt
-data/*.json
 ```
 
 ## API Endpoints
@@ -148,13 +114,19 @@ data/*.json
 - `POST /api/logs/weight`
 - `GET /api/dashboard/summary?userId=demo`
 
-## Normalization Rules
+See [docs/API_SPEC.md](docs/API_SPEC.md) for examples.
 
-- Food calories are preserved when provided.
-- If food calories are missing but macros exist, calories are estimated from `proteinG * 4 + carbsG * 4 + fatG * 9`.
-- Exercise calories are preserved when provided.
-- If exercise calories are missing, calories are estimated from duration and intensity.
-- Profile metrics return BMR, TDEE, and daily calorie target immediately after saving.
+## Project Documentation
+
+- [Product requirements](docs/PRD.md)
+- [MVP phases](docs/PHASES.md)
+- [Task backlog](docs/TASKS.md)
+- [Architecture decisions](docs/DECISIONS.md)
+- [API specification](docs/API_SPEC.md)
+- [Data model](docs/DATA_MODEL.md)
+- [UI specification](docs/UI_SPEC.md)
+- [Changelog](docs/CHANGELOG.md)
+- [Vercel deployment](docs/vercel-deploy.md)
 
 ## Project Structure
 
@@ -165,48 +137,18 @@ src/
   app.ts
   server.ts
   config/
-    env.ts
   constants/
-    activity.ts
   middleware/
-    apiKey.ts
-    errorHandler.ts
-    notFound.ts
   routes/
-    dashboard.ts
-    health.ts
-    logs.ts
-    profile.ts
   services/
-    dashboardService.ts
-    fitnessService.ts
-    logNormalizationService.ts
-    storageService.ts
   types/
-    domain.ts
   utils/
-    date.ts
-    http.ts
   validators/
-    logValidators.ts
 tests/
 docs/
 openapi.yaml
 vercel.json
 ```
-
-## Structure Guidelines
-
-- `api/` owns the Vercel Function entrypoint.
-- `routes/` owns HTTP handlers and should stay thin.
-- `validators/` owns request validation with Zod.
-- `services/` owns business logic and integrations.
-- `storageService.ts` owns the storage abstraction and adapters.
-- `types/` owns shared domain types.
-- `constants/` owns shared lookup tables.
-- `utils/` owns small generic helpers only.
-- `docs/` owns setup and operational documentation.
-- `openapi.yaml` is the source for Custom GPT Actions.
 
 ## GPT Actions
 
@@ -214,25 +156,20 @@ Use [openapi.yaml](openapi.yaml) as the schema source for Custom GPT Actions.
 
 Before connecting a Custom GPT:
 
-1. Verify local build and tests.
-2. Create or link Upstash Redis in Vercel.
-3. Deploy the API to Vercel.
-4. Update the `servers` URL in `openapi.yaml` to the production URL.
-5. Import `openapi.yaml` into GPT Actions.
+1. Run local build and tests.
+2. Configure Upstash Redis.
+3. Deploy to Vercel.
+4. Smoke test production endpoints.
+5. Update the `servers` URL in `openapi.yaml`.
+6. Import the schema into GPT Actions.
 
-## Deployment
+## Verification
 
-Recommended sequence:
+After code changes, run:
 
-```txt
-Upstash Redis setup
--> local build/test
--> Vercel deploy
--> smoke test production API
--> update OpenAPI production URL
--> Custom GPT Actions
+```bash
+npm run build
+npm test
 ```
 
-Vercel deployment guide:
-
-[docs/vercel-deploy.md](docs/vercel-deploy.md)
+For documentation-only changes, review the Markdown files for accuracy and link consistency.

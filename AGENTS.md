@@ -1,6 +1,6 @@
 # Agent Guide
 
-This file describes how coding agents should work in this repository.
+This file describes how Codex and GPT coding agents should work in this repository.
 
 ## Project Purpose
 
@@ -55,9 +55,21 @@ vercel.json
 - `src/utils/`: small framework-agnostic helpers.
 - `src/validators/`: Zod request schemas.
 - `tests/`: automated tests.
-- `docs/`: human setup and operational docs.
+- `docs/`: product, architecture, API, data model, UI, deployment, and operational docs.
 - `openapi.yaml`: GPT Actions schema.
-- `vercel.json`: Vercel routing/build configuration.
+- `vercel.json`: Vercel routing and build configuration.
+
+## Documentation Map
+
+- `docs/PRD.md`: product requirements and MVP scope.
+- `docs/PHASES.md`: phased delivery plan.
+- `docs/TASKS.md`: actionable backlog.
+- `docs/DECISIONS.md`: architecture decisions.
+- `docs/API_SPEC.md`: endpoint behavior and examples.
+- `docs/DATA_MODEL.md`: domain types, validation rules, calculations, and storage model.
+- `docs/UI_SPEC.md`: planned UI pages, components, and validation behavior.
+- `docs/CHANGELOG.md`: notable project changes.
+- `README.md`: project overview and quick start.
 
 ## Coding Guidelines
 
@@ -67,13 +79,14 @@ vercel.json
 - Keep persistence details behind the storage service abstraction.
 - Keep domain types in `types/domain.ts` unless the domain grows enough to split.
 - Prefer small, explicit functions over broad utility modules.
-- Do not commit `.env`, credentials, generated secrets, `node_modules/`, `dist/`, or runtime JSON data.
+- Do not commit `.env`, credentials, generated secrets, `node_modules/`, or `dist/`.
 - Update `openapi.yaml` whenever endpoint behavior or response shape changes.
-- Update README or docs when setup steps change.
+- Update README or docs when setup steps, endpoint behavior, data models, or deployment steps change.
+- Do not implement code when the user asks for documentation only.
 
 ## Storage Contract
 
-Production storage:
+Persistent storage:
 
 ```env
 STORAGE_DRIVER=upstash
@@ -82,11 +95,10 @@ UPSTASH_REDIS_REST_TOKEN=
 REDIS_KEY_PREFIX=fitsheet
 ```
 
-Local-only fallback:
+Temporary non-durable local testing:
 
 ```env
-STORAGE_DRIVER=json
-DATA_FILE_PATH=./data/fitsheet.json
+STORAGE_DRIVER=memory
 ```
 
 Upstash key pattern:
@@ -100,22 +112,30 @@ fitsheet:weights:<userId>
 
 ## Verification
 
-When code changes are made, ask the user to run the relevant commands:
+When code changes are made, ask the user to run:
 
 ```bash
-npm install
 npm run build
 npm test
 ```
 
+If dependencies may be missing, ask the user to run:
+
+```bash
+npm install
+```
+
 If storage behavior changes, also ask the user to run local API smoke tests or production Vercel smoke tests.
+
+For documentation-only changes, do not ask for build or test commands unless the documentation changed executable examples that need verification.
 
 ## Git Workflow
 
 - Keep commits focused.
 - Do not rewrite history unless the user explicitly requests it.
 - Do not revert user changes without explicit permission.
-- Push checkpoints after meaningful completed steps when remote access is available.
+- Ignore unrelated dirty worktree changes.
+- Push checkpoints after meaningful completed steps when remote access is available and the user wants remote updates.
 
 ## Deployment Notes
 

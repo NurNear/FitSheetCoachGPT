@@ -4,7 +4,7 @@ info:
   version: 0.1.0
   description: Middleware API for Custom GPT health tracking actions.
 servers:
-  - url: http://localhost:3000
+  - url: https://fit-sheet-coach-gpt.vercel.app
 security:
   - ApiKeyAuth: []
 paths:

@@ -1,7 +1,5 @@
 import { env } from "./config/env.js";
-import { createApp } from "./app.js";
-
-const app = createApp();
+import app from "./app.js";
 
 app.listen(env.PORT, () => {
   console.log(`FitSheet Coach GPT API listening on port ${env.PORT}`);

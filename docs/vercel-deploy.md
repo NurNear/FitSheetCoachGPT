@@ -21,6 +21,14 @@ Optional API protection:
 API_KEY=
 ```
 
+Planned AI coach integration:
+
+```env
+OPENAI_API_KEY=
+```
+
+Keep `OPENAI_API_KEY` server-side only. The frontend should call backend coach endpoints rather than OpenAI directly.
+
 ## Upstash Setup
 
 Option A: Vercel Marketplace
@@ -111,4 +119,4 @@ servers:
   - url: https://your-project.vercel.app
 ```
 
-Then import `openapi.yaml` into Custom GPT Actions.
+Then configure the frontend to call the deployed backend API URL and keep `openapi.yaml` aligned with implemented production endpoints. Add planned AI coach endpoints to the schema only after they are implemented.

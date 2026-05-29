@@ -2,31 +2,33 @@
 
 ## Product Name
 
-FitSheet Coach GPT
+FitSheet Coach
 
 ## Purpose
 
-FitSheet Coach GPT is middleware for a Custom GPT personal trainer. It receives structured health and fitness logs from GPT Actions, validates and normalizes the data, stores it in a deployment-friendly backend, and returns useful daily summaries for coaching.
+FitSheet Coach is an AI coach-mediated personal health tracker. It receives user text and image input from a frontend, sends that input to a backend coach layer for OpenAI analysis, returns structured log candidates and coaching guidance, and only saves health records after the user explicitly confirms.
 
 ## Problem
 
-Users can describe food, exercise, and weight updates naturally to a Custom GPT, but GPT Actions need a reliable API contract. The project bridges conversational input and persistent health tracking by providing a focused REST API with predictable validation, storage, and summary behavior.
+Users need a fast way to describe meals, workouts, weight updates, and goals naturally, including with food or activity photos, without manually filling every structured field. The project bridges natural input and persistent health tracking through an AI coach flow that analyzes text/images, asks follow-up questions when needed, proposes structured records, gives coaching advice, and waits for confirmation before storing data.
 
 ## Target Users
 
-- A person using a Custom GPT as a fitness and nutrition assistant.
-- A developer configuring GPT Actions for personal health tracking.
+- A person using an AI-assisted fitness and nutrition coach.
+- A developer building or maintaining the frontend, backend coach API, and storage API.
 - A maintainer deploying the API to Vercel with Upstash Redis.
 
 ## Goals
 
-- Save profile metrics needed for BMR, TDEE, and calorie targets.
-- Log food intake with optional macro-based calorie estimation.
-- Log exercise with optional intensity-based calorie estimation.
-- Log body weight over time.
-- Return a daily dashboard summary for GPT coaching.
+- Accept Thai or English text and image input from the frontend.
+- Analyze user input with OpenAI through a server-side coach layer.
+- Infer likely profile, food, exercise, and weight log candidates.
+- Ask clarifying questions when input is incomplete or confidence is low.
+- Provide coaching advice before and after confirmed saves.
+- Save records only after explicit user confirmation.
+- Detect behavior patterns from submitted inputs and stored history.
 - Keep storage behind an abstraction while using Upstash Redis for persistent storage.
-- Publish an OpenAPI schema compatible with GPT Actions.
+- Maintain an OpenAPI schema for implemented backend endpoints.
 
 ## Non-Goals
 
@@ -34,7 +36,9 @@ Users can describe food, exercise, and weight updates naturally to a Custom GPT,
 - A full consumer mobile app.
 - Payment, account management, or multi-tenant organization management.
 - Replacing nutrition databases or wearable integrations.
-- Rendering a production web dashboard in the current MVP.
+- Native mobile apps.
+- Hidden behavior tracking outside submitted inputs and stored records.
+- Automatic save without user confirmation in v1.
 
 ## MVP Scope
 
@@ -43,21 +47,26 @@ Users can describe food, exercise, and weight updates naturally to a Custom GPT,
 - API key protection for non-health endpoints when `API_KEY` is set.
 - Storage drivers for Upstash Redis and temporary memory storage.
 - Endpoints for health, profile metrics, food logs, exercise logs, weight logs, and dashboard summary.
+- Requirement specification for an AI coach input experience.
+- Planned backend-mediated OpenAI coach endpoints for analyze and confirm flows.
 - OpenAPI 3.1 schema in `openapi.yaml`.
 - Deployment docs for Vercel and Upstash Redis.
 
 ## User Stories
 
-- As a GPT user, I want to save my profile metrics so the coach can calculate my calorie target.
-- As a GPT user, I want to log meals without always knowing exact calories so the system can estimate from macros when possible.
-- As a GPT user, I want to log workouts quickly so the system can estimate calories burned from duration and intensity.
-- As a GPT user, I want to ask for today's summary so the coach can tell me what to do next.
-- As a maintainer, I want one OpenAPI schema so I can connect the API to GPT Actions.
+- As a user, I want to send a meal photo or meal description so the coach can estimate what should be logged.
+- As a user, I want to describe workouts naturally so the coach can infer duration, intensity, and calories when possible.
+- As a user, I want to review and edit AI-proposed logs before anything is saved.
+- As a user, I want the coach to detect patterns in my submitted history and give practical next-step advice.
+- As a maintainer, I want OpenAI calls to stay server-side so credentials are never exposed to the frontend.
+- As a maintainer, I want one schema for implemented backend endpoints and separate docs for planned coach endpoints.
 - As a maintainer, I want storage drivers to be swappable without rewriting routes.
 
 ## Success Metrics
 
-- GPT Actions can call all documented endpoints successfully.
+- The frontend can send text and image input to a backend coach flow.
+- The coach flow returns structured log candidates, confidence notes, and coaching guidance.
+- Confirmed candidates save profile, food, exercise, or weight data through existing storage services.
 - Invalid requests return clear validation errors.
 - Daily summary includes calories in, calories out, macros, latest weight, BMR, TDEE, calorie target, and a recommendation when data exists.
 - Production deployment uses Upstash Redis without filesystem writes.
@@ -68,4 +77,7 @@ Users can describe food, exercise, and weight updates naturally to a Custom GPT,
 - Health data is sensitive and must be protected by environment management and API key usage.
 - Food calorie estimates are approximate and should be treated as coaching support, not medical truth.
 - Local memory storage is non-durable and should not be used for production.
-- OpenAPI drift can break GPT Actions if endpoint behavior changes without schema updates.
+- OpenAI output can be approximate, so the user must confirm before saving records.
+- Behavior detection must be based only on submitted inputs and stored health records.
+- OpenAPI drift can break the implemented backend contract if endpoint behavior changes without schema updates.
+- A browser frontend must avoid exposing server-only API keys, including `OPENAI_API_KEY`, or sensitive data in client-side storage.

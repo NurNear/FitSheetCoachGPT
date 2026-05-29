@@ -1,12 +1,12 @@
 # Architecture Decisions
 
-## ADR-001: Use TypeScript Express for the Middleware API
+## ADR-001: Use TypeScript Express for the Backend API
 
 Status: Accepted
 
-Decision: Build the API with TypeScript and Express.
+Decision: Build the backend API with TypeScript and Express.
 
-Context: GPT Actions need stable HTTP endpoints with JSON request and response bodies. Express keeps routing simple, and TypeScript gives the project a typed domain model.
+Context: The frontend needs stable HTTP endpoints with JSON request and response bodies. Express keeps routing simple, and TypeScript gives the project a typed domain model.
 
 Consequences:
 
@@ -20,7 +20,7 @@ Status: Accepted
 
 Decision: Validate incoming request bodies and query parameters with Zod schemas in `src/validators/`.
 
-Context: GPT Actions can send malformed or incomplete data. Validation needs to happen before business logic or persistence.
+Context: Frontend forms and direct API clients can send malformed or incomplete data. Validation needs to happen before business logic or persistence.
 
 Consequences:
 
@@ -70,30 +70,32 @@ Consequences:
 - `STORAGE_DRIVER=json` and `DATA_FILE_PATH` are not supported.
 - Temporary local smoke tests can use the non-durable memory driver.
 
-## ADR-006: Use OpenAPI 3.1 as the GPT Actions Contract
+## ADR-006: Use OpenAPI 3.1 as the API Contract
 
 Status: Accepted
 
-Decision: Maintain `openapi.yaml` as the source schema for Custom GPT Actions.
+Decision: Maintain `openapi.yaml` as the source schema for implemented backend endpoints.
 
-Context: GPT Actions import OpenAPI schemas and depend on operation IDs, request schemas, and response schemas.
+Context: The AI coach flow will use existing write endpoints for confirmed persistence, while planned coach endpoints should be documented before they are implemented.
 
 Consequences:
 
 - Endpoint behavior changes require `openapi.yaml` updates.
-- Production deployment requires updating the `servers` URL.
+- Production deployment requires updating the `servers` URL when the deployed API URL changes.
+- Planned endpoints should not be added to `openapi.yaml` until implemented.
 - Examples and error schemas should be improved as the API matures.
 
-## ADR-007: Keep the MVP API-First
+## ADR-007: Use a Backend-Mediated AI Coach Flow
 
 Status: Accepted
 
-Decision: Prioritize the API and GPT Actions workflow before implementing a browser UI.
+Decision: Make the primary product flow `Frontend -> Backend Coach API -> OpenAI -> Backend Storage API`.
 
-Context: The main product experience is currently conversational through a Custom GPT.
+Context: Users should be able to submit natural text and images, receive coaching guidance and structured log candidates, and confirm before saving. OpenAI credentials must stay server-side.
 
 Consequences:
 
-- `docs/UI_SPEC.md` describes planned UI behavior but no UI code is implemented yet.
-- Dashboard needs are served first by `GET /api/dashboard/summary`.
-- A frontend can be added later without changing the core API contract.
+- The frontend sends text/images to backend coach endpoints, never directly to OpenAI.
+- The coach returns candidates, confidence notes, and advice before persistence.
+- Records are saved only after explicit user confirmation.
+- Behavior insights must come only from submitted inputs and stored records.

@@ -18,8 +18,9 @@
 - [ ] Verify `openapi.yaml` matches every implemented route.
 - [ ] Add documented error response schemas to `openapi.yaml`.
 - [ ] Add example request and response objects to `openapi.yaml`.
-- [ ] Confirm GPT Actions import succeeds against the production schema.
+- [ ] Confirm implemented API examples match the production schema.
 - [ ] Update the OpenAPI `servers` URL after production deployment.
+- [x] Add AI coach endpoints to `openapi.yaml` only after they are implemented.
 
 ## Validation
 
@@ -52,7 +53,9 @@
 - [ ] Document API key setup in deployment docs.
 - [ ] Add tests for unauthorized API requests when `API_KEY` is set.
 - [ ] Add tests confirming `GET /health` remains public.
-- [ ] Review CORS policy before exposing the API to a browser UI.
+- [ ] Review CORS policy before exposing the API to the frontend.
+- [ ] Document `OPENAI_API_KEY` setup as a server-side-only secret.
+- [ ] Confirm the frontend never calls OpenAI directly.
 
 ## Dashboard
 
@@ -70,14 +73,20 @@
 - [ ] Deploy to Vercel.
 - [ ] Run production smoke tests.
 - [ ] Update `openapi.yaml` with the production URL.
-- [ ] Connect Custom GPT Actions to the production schema.
+- [ ] Add `OPENAI_API_KEY` to Vercel.
+- [ ] Configure frontend environment to call the production backend coach API URL.
 
-## Future UI
+## AI Coach Flow
 
-- [ ] Choose frontend framework or keep API-only.
-- [ ] Build profile setup page.
-- [ ] Build food log page.
-- [ ] Build exercise log page.
-- [ ] Build weight log page.
+- [x] Choose simple Express-served frontend as the default implementation direction.
+- [x] Design `POST /api/coach/analyze` request and response schemas.
+- [x] Design `POST /api/coach/confirm` request and response schemas.
+- [ ] Build server-side OpenAI analysis service for Thai and English text.
+- [ ] Add image analysis support through the backend coach endpoint.
+- [ ] Return structured profile, food, exercise, and weight log candidates.
+- [x] Require explicit user confirmation before saving candidates.
+- [ ] Add behavior insights based only on submitted inputs and stored logs.
+- [ ] Build coach input page for text and image submissions.
+- [ ] Build candidate review, edit, reject, and confirm UI.
 - [ ] Build dashboard summary page.
 - [ ] Add client-side validation matching Zod schemas.

@@ -1,13 +1,15 @@
-# FitSheet Coach GPT
+# FitSheet Coach
 
-FitSheet Coach GPT is a TypeScript Express middleware API for a Custom GPT personal trainer. It validates requests, normalizes health data, stores logs through a storage abstraction, and exposes summary endpoints that GPT Actions can call.
+FitSheet Coach is a TypeScript Express API for an AI coach-mediated personal health tracker. The frontend sends text and image input to a backend coach layer, the backend uses OpenAI to propose structured health logs and coaching advice, and records are saved only after explicit user confirmation.
 
 ## Architecture
 
 ```txt
 User
--> Custom GPT
--> Middleware API
+-> Frontend
+-> Backend Coach API
+-> OpenAI
+-> Backend Storage API
 -> Upstash Redis
 -> Dashboard summary
 ```
@@ -20,6 +22,7 @@ Storage is Upstash Redis for Vercel deployment. Temporary local testing can use 
 - TypeScript
 - Express
 - Zod
+- OpenAI API
 - Upstash Redis
 - Vercel Functions
 - OpenAPI 3.1
@@ -31,7 +34,7 @@ Storage is Upstash Redis for Vercel deployment. Temporary local testing can use 
 - Profile, food, exercise, weight, health, and dashboard summary endpoints exist.
 - Upstash Redis is the persistent storage driver.
 - Local JSON file storage has been removed.
-- Browser UI is not implemented yet; see `docs/UI_SPEC.md` for the planned UI.
+- AI coach requirements are documented in `docs/PRD.md` and `docs/UI_SPEC.md`; analyze and confirm endpoints now have backend foundation routes, while OpenAI analysis and UI code are not implemented yet.
 
 ## Local Machine Constraint
 
@@ -105,7 +108,15 @@ Optional API protection:
 API_KEY=
 ```
 
-## API Endpoints
+Planned AI coach integration:
+
+```env
+OPENAI_API_KEY=
+```
+
+`OPENAI_API_KEY` must stay server-side. The frontend should call backend coach endpoints, not OpenAI directly.
+
+## Implemented API Endpoints
 
 - `GET /health`
 - `POST /api/profile/metrics`
@@ -115,6 +126,17 @@ API_KEY=
 - `GET /api/dashboard/summary?userId=demo`
 
 See [docs/API_SPEC.md](docs/API_SPEC.md) for examples.
+
+## AI Coach Endpoints
+
+- `POST /api/coach/analyze`
+- `POST /api/coach/confirm`
+
+## Future AI Coach Endpoint
+
+- `GET /api/coach/behavior?userId=demo`
+
+Behavior insights are documented as a future requirement and should be added to [openapi.yaml](openapi.yaml) after implementation.
 
 ## Project Documentation
 
@@ -150,18 +172,19 @@ openapi.yaml
 vercel.json
 ```
 
-## GPT Actions
+## AI Coach Integration
 
-Use [openapi.yaml](openapi.yaml) as the schema source for Custom GPT Actions.
+Use [openapi.yaml](openapi.yaml) as the contract for implemented backend endpoints. Future AI coach endpoints should be documented in [docs/API_SPEC.md](docs/API_SPEC.md) before implementation and added to the schema after they exist.
 
-Before connecting a Custom GPT:
+Before wiring the AI coach flow to production:
 
 1. Run local build and tests.
 2. Configure Upstash Redis.
-3. Deploy to Vercel.
-4. Smoke test production endpoints.
-5. Update the `servers` URL in `openapi.yaml`.
-6. Import the schema into GPT Actions.
+3. Configure `OPENAI_API_KEY` server-side.
+4. Deploy to Vercel.
+5. Smoke test production endpoints.
+6. Update the `servers` URL in `openapi.yaml`.
+7. Configure the frontend to call the deployed backend coach API URL.
 
 ## Verification
 

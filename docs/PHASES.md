@@ -72,36 +72,39 @@ Exit criteria:
 - Temporary local testing can run with `STORAGE_DRIVER=memory`.
 - Storage behavior is isolated from routes.
 
-## Phase 4: GPT Actions Contract
+## Phase 4: Implemented API Contract
 
-Goal: Make the API usable by a Custom GPT.
+Goal: Keep the implemented backend endpoints reliable for coach-confirmed persistence and dashboard reads.
 
 Deliverables:
 
 - OpenAPI 3.1 schema.
-- Operation IDs for GPT Actions.
+- Stable operation IDs for implemented API clients and documentation.
 - API key security scheme.
 - Endpoint examples in docs.
 - Production server URL update after deployment.
 
 Exit criteria:
 
-- The Custom GPT can import `openapi.yaml`.
-- GPT Actions can call write and summary endpoints with expected responses.
+- `openapi.yaml` matches every implemented route.
+- Confirmed coach output can be saved through write endpoints with expected responses.
 
-## Phase 5: Dashboard and UX Expansion
+## Phase 5: AI Coach-Mediated Input Experience
 
-Goal: Add human-readable views after API stability.
+Goal: Add backend-mediated AI coach analysis for text and image input before saving records.
 
 Deliverables:
 
-- Dashboard page for daily summary.
-- Profile setup page.
-- Log review pages.
-- Client-side validation aligned with API validation.
-- Optional manual correction flows for logged data.
+- `POST /api/coach/analyze` endpoint for text/image analysis foundation.
+- `POST /api/coach/confirm` endpoint for explicit save confirmation.
+- Frontend input surface for Thai/English text and image upload.
+- Candidate review UI with edit and confirm actions.
+- Coaching response panel with follow-up questions when confidence is low.
+- Behavior insight requirements based only on submitted inputs and stored logs.
 
 Exit criteria:
 
-- A user can inspect recent health data without using raw API responses.
-- UI behavior matches documented validation and data model rules.
+- A user can submit text or image input and receive structured log candidates.
+- No health log is saved until the user explicitly confirms.
+- OpenAI credentials remain server-side.
+- Behavior insights do not rely on hidden tracking.

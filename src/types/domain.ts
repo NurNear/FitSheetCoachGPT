@@ -55,3 +55,69 @@ export interface DashboardSummary {
   calorieTarget?: number;
   recommendation: string;
 }
+
+export type CoachCandidateType = "profile" | "food" | "exercise" | "weight";
+export type CoachConfidence = "low" | "medium" | "high" | "needs_follow_up";
+
+export interface CoachImageInput {
+  mimeType: string;
+  dataUrl?: string;
+  url?: string;
+  altText?: string;
+}
+
+export interface CoachAnalyzeRequest {
+  userId: string;
+  message?: string;
+  image?: CoachImageInput;
+  contextDate?: string;
+}
+
+export type CoachCandidateData =
+  | (Omit<ProfileMetrics, "loggedAt"> & { loggedAt?: string })
+  | (Omit<FoodLog, "loggedAt"> & { loggedAt?: string })
+  | (Omit<ExerciseLog, "loggedAt"> & { loggedAt?: string })
+  | (Omit<WeightLog, "loggedAt"> & { loggedAt?: string });
+
+interface CoachCandidateBase {
+  confidence?: number;
+  assumptions?: string[];
+}
+
+export type CoachLogCandidate =
+  | (CoachCandidateBase & {
+      type: "profile";
+      data: Omit<ProfileMetrics, "loggedAt"> & { loggedAt?: string };
+    })
+  | (CoachCandidateBase & {
+      type: "food";
+      data: Omit<FoodLog, "loggedAt"> & { loggedAt?: string };
+    })
+  | (CoachCandidateBase & {
+      type: "exercise";
+      data: Omit<ExerciseLog, "loggedAt"> & { loggedAt?: string };
+    })
+  | (CoachCandidateBase & {
+      type: "weight";
+      data: Omit<WeightLog, "loggedAt"> & { loggedAt?: string };
+    });
+
+export interface CoachAnalyzeResponse {
+  coachingMessage: string;
+  candidates: CoachLogCandidate[];
+  confidence: CoachConfidence;
+  assumptions: string[];
+  needsConfirmation: boolean;
+}
+
+export interface CoachConfirmRequest {
+  userId: string;
+  candidate: CoachLogCandidate;
+  edits?: Record<string, unknown>;
+  confirm: true;
+}
+
+export interface CoachConfirmResponse {
+  coachingMessage: string;
+  saved: ProfileMetrics | FoodLog | ExerciseLog | WeightLog;
+}

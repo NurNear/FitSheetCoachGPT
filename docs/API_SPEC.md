@@ -294,7 +294,7 @@ Response:
 
 ## OpenAPI
 
-The GPT Actions schema lives in:
+The implemented backend API contract lives in:
 
 ```txt
 openapi.yaml
@@ -302,3 +302,52 @@ openapi.yaml
 
 Update the schema whenever endpoint behavior, request shape, response shape, or authentication behavior changes.
 
+## AI Coach API Foundation
+
+These endpoints provide the backend foundation for the AI coach-mediated tracker. The analyze endpoint currently returns a safe follow-up response without calling OpenAI; the confirm endpoint persists a selected candidate only when explicit confirmation is present.
+
+### POST /api/coach/analyze
+
+Accepts user text and optional image input through the backend coach route. The frontend sends input to this backend endpoint, never directly to OpenAI.
+
+Request fields:
+
+- `userId`: required string.
+- `message`: optional free text in Thai or English.
+- `image`: optional image upload or image reference strategy.
+- `contextDate`: optional `yyyy-mm-dd`.
+
+Response fields:
+
+- `coachingMessage`: natural-language advice or follow-up question.
+- `candidates`: structured profile, food, exercise, or weight log candidates.
+- `confidence`: model confidence or review status.
+- `assumptions`: notes about inferred values.
+- `needsConfirmation`: true when candidates are ready for confirmation; false when the coach is asking a follow-up question or OpenAI analysis is not connected yet.
+
+### POST /api/coach/confirm
+
+Persists one selected AI-proposed candidate after explicit user confirmation. Candidate data is validated against the same rules as existing profile and log endpoints.
+
+Request fields:
+
+- `userId`: required string.
+- `candidate`: selected structured candidate.
+- `edits`: optional audit metadata for user corrections. Send final corrected values in `candidate.data`.
+- `confirm`: required boolean or explicit confirmation intent.
+
+Behavior:
+
+- Reject requests without explicit confirmation.
+- Save confirmed candidates through existing profile/log services or endpoints.
+- Return the saved record and any post-save coaching message.
+
+### GET /api/coach/behavior
+
+Future endpoint for behavior insights derived only from submitted inputs and stored logs.
+
+Planned behavior:
+
+- Detect patterns such as low-protein days, missed workouts, repeated calorie surplus or deficit, and weight trend changes.
+- Avoid hidden tracking or browser activity monitoring.
+- Include evidence from stored records when possible.

@@ -76,7 +76,7 @@ Status: Accepted
 
 Decision: Maintain `openapi.yaml` as the source schema for implemented backend endpoints.
 
-Context: The AI coach flow will use existing write endpoints for confirmed persistence, while planned coach endpoints should be documented before they are implemented.
+Context: The backend exposes direct write endpoints for trusted clients, while Custom GPT must receive only the confirmed coach write and approved read actions.
 
 Consequences:
 
@@ -85,17 +85,20 @@ Consequences:
 - Planned endpoints should not be added to `openapi.yaml` until implemented.
 - Examples and error schemas should be improved as the API matures.
 
-## ADR-007: Use a Backend-Mediated AI Coach Flow
+## ADR-007: Use a Custom GPT-Mediated Coach Flow
 
 Status: Accepted
 
-Decision: Make the primary product flow `Frontend -> Backend Coach API -> OpenAI -> Backend Storage API`.
+Decision: Make the primary product flow `User -> Custom GPT in ChatGPT -> GPT Actions -> Backend API -> Backend Storage API`.
 
-Context: Users should be able to submit natural text and images, receive coaching guidance and structured log candidates, and confirm before saving. OpenAI credentials must stay server-side.
+Context: Users should be able to use their own ChatGPT Plus/Custom GPT experience for natural text and image input. ChatGPT Plus cannot be used as a backend API key, so the backend should not depend on a server-side OpenAI API key for the primary flow.
 
 Consequences:
 
-- The frontend sends text/images to backend coach endpoints, never directly to OpenAI.
-- The coach returns candidates, confidence notes, and advice before persistence.
+- Custom GPT analyzes text/images inside ChatGPT and calls backend endpoints through GPT Actions.
+- The backend validates and persists structured candidates after explicit confirmation.
 - Records are saved only after explicit user confirmation.
 - Behavior insights must come only from submitted inputs and stored records.
+- Server-side OpenAI analysis is excluded from the MVP.
+- `openapi.yaml` remains the full backend contract while `custom-gpt-actions.yaml` exposes only approved GPT Actions.
+- Production requests are restricted to `OWNER_USER_ID`.

@@ -15,12 +15,12 @@
 
 ## API Contract
 
-- [ ] Verify `openapi.yaml` matches every implemented route.
-- [ ] Add documented error response schemas to `openapi.yaml`.
-- [ ] Add example request and response objects to `openapi.yaml`.
+- [x] Verify `openapi.yaml` matches every implemented route.
+- [x] Add documented error response schemas to `openapi.yaml`.
+- [x] Add example request and response objects to `openapi.yaml`.
 - [ ] Confirm implemented API examples match the production schema.
 - [ ] Update the OpenAPI `servers` URL after production deployment.
-- [x] Add AI coach endpoints to `openapi.yaml` only after they are implemented.
+- [x] Add coach endpoints to `openapi.yaml` only after they are implemented.
 
 ## Validation
 
@@ -29,7 +29,7 @@
 - [ ] Add validator tests for exercise logs.
 - [ ] Add validator tests for weight logs.
 - [ ] Add validator tests for dashboard query parameters.
-- [ ] Confirm all validation error responses use the same envelope.
+- [x] Confirm all validation error responses use the same envelope.
 
 ## Fitness Logic
 
@@ -43,19 +43,19 @@
 ## Storage
 
 - [ ] Add storage contract tests that can run against memory storage.
-- [ ] Add Upstash storage smoke test checklist for production.
+- [x] Add Upstash storage smoke test checklist for production.
 - [ ] Document Redis key examples for each stored record type.
 - [ ] Review whether list growth needs retention or archival rules.
 
 ## Security
 
-- [ ] Confirm `API_KEY` is required in production deployment.
-- [ ] Document API key setup in deployment docs.
+- [x] Confirm `API_KEY` is required in production deployment.
+- [x] Document API key and owner setup in deployment docs.
 - [ ] Add tests for unauthorized API requests when `API_KEY` is set.
 - [ ] Add tests confirming `GET /health` remains public.
-- [ ] Review CORS policy before exposing the API to the frontend.
-- [ ] Document `OPENAI_API_KEY` setup as a server-side-only secret.
-- [ ] Confirm the frontend never calls OpenAI directly.
+- [ ] Review CORS policy before exposing the API to any browser frontend.
+- [x] Document that the primary Custom GPT flow does not require backend `OPENAI_API_KEY`.
+- [ ] Confirm backend `API_KEY` can be safely configured for GPT Actions.
 
 ## Dashboard
 
@@ -70,23 +70,22 @@
 - [ ] Create Upstash Redis database.
 - [ ] Add Upstash environment variables to Vercel.
 - [ ] Add `API_KEY` to Vercel.
+- [ ] Add `OWNER_USER_ID` to Vercel.
 - [ ] Deploy to Vercel.
 - [ ] Run production smoke tests.
-- [ ] Update `openapi.yaml` with the production URL.
-- [ ] Add `OPENAI_API_KEY` to Vercel.
-- [ ] Configure frontend environment to call the production backend coach API URL.
+- [x] Update `openapi.yaml` with the production URL.
+- [ ] Configure Custom GPT Actions authentication with the production backend `API_KEY`.
+- [ ] Configure Custom GPT Actions to use the production `custom-gpt-actions.yaml` server URL.
 
-## AI Coach Flow
+## Custom GPT Coach Flow
 
-- [x] Choose simple Express-served frontend as the default implementation direction.
-- [x] Design `POST /api/coach/analyze` request and response schemas.
+- [x] Choose Custom GPT as the default text/image input and analysis surface.
+- [x] Write Custom GPT instructions for Thai/English health input, image analysis, candidate review, and confirm-before-save behavior.
+- [x] Create the restricted `custom-gpt-actions.yaml` schema.
 - [x] Design `POST /api/coach/confirm` request and response schemas.
-- [ ] Build server-side OpenAI analysis service for Thai and English text.
-- [ ] Add image analysis support through the backend coach endpoint.
-- [ ] Return structured profile, food, exercise, and weight log candidates.
+- [x] Remove server-side OpenAI analysis from the MVP.
+- [x] Ensure Custom GPT can send structured profile, food, exercise, and weight candidates to the backend.
 - [x] Require explicit user confirmation before saving candidates.
-- [ ] Add behavior insights based only on submitted inputs and stored logs.
-- [ ] Build coach input page for text and image submissions.
-- [ ] Build candidate review, edit, reject, and confirm UI.
-- [ ] Build dashboard summary page.
-- [ ] Add client-side validation matching Zod schemas.
+- [x] Add behavior insights based only on submitted inputs and stored logs.
+- [ ] Test text input, image input, edit, reject, and confirm flows inside Custom GPT.
+- [ ] Decide whether a separate browser dashboard is still needed.

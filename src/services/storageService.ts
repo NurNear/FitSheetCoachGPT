@@ -11,6 +11,7 @@ export interface StorageService {
   getFoodLogs(userId: string, date: string): Promise<FoodLog[]>;
   getExerciseLogs(userId: string, date: string): Promise<ExerciseLog[]>;
   getLatestWeight(userId: string): Promise<WeightLog | undefined>;
+  getWeightLogs(userId: string): Promise<WeightLog[]>;
 }
 
 interface DataStore {
@@ -73,6 +74,10 @@ class MemoryStorageService implements StorageService {
   async getLatestWeight(userId: string): Promise<WeightLog | undefined> {
     return this.store.weights.filter((weight) => weight.userId === userId).at(-1);
   }
+
+  async getWeightLogs(userId: string): Promise<WeightLog[]> {
+    return this.store.weights.filter((weight) => weight.userId === userId);
+  }
 }
 
 class UpstashRedisStorageService implements StorageService {
@@ -118,6 +123,10 @@ class UpstashRedisStorageService implements StorageService {
   async getLatestWeight(userId: string): Promise<WeightLog | undefined> {
     const value = await this.redis.lindex(this.userKey("weights", userId), -1);
     return this.parseJson<WeightLog>(value);
+  }
+
+  async getWeightLogs(userId: string): Promise<WeightLog[]> {
+    return this.getList<WeightLog>(this.userKey("weights", userId));
   }
 
   private async append(key: string, value: unknown): Promise<void> {

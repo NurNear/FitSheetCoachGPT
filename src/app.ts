@@ -3,6 +3,7 @@ import express from "express";
 import { apiKeyAuth } from "./middleware/apiKey.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { notFound } from "./middleware/notFound.js";
+import { ownerUserAuth } from "./middleware/ownerUser.js";
 import { coachRouter } from "./routes/coach.js";
 import { dashboardRouter } from "./routes/dashboard.js";
 import { healthRouter } from "./routes/health.js";
@@ -17,6 +18,7 @@ export function createApp() {
 
   app.use(healthRouter);
   app.use(apiKeyAuth);
+  app.use(ownerUserAuth);
   app.use("/api/coach", coachRouter);
   app.use("/api/profile", profileRouter);
   app.use("/api/logs", logsRouter);

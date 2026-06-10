@@ -38,6 +38,7 @@ src/
 tests/
 docs/
 openapi.yaml
+custom-gpt-actions.yaml
 vercel.json
 ```
 
@@ -56,7 +57,8 @@ vercel.json
 - `src/validators/`: Zod request schemas.
 - `tests/`: automated tests.
 - `docs/`: product, architecture, API, data model, UI, deployment, and operational docs.
-- `openapi.yaml`: GPT Actions schema.
+- `openapi.yaml`: full backend API contract.
+- `custom-gpt-actions.yaml`: restricted schema imported into Custom GPT.
 - `vercel.json`: Vercel routing and build configuration.
 
 ## Documentation Map
@@ -68,6 +70,7 @@ vercel.json
 - `docs/API_SPEC.md`: endpoint behavior and examples.
 - `docs/DATA_MODEL.md`: domain types, validation rules, calculations, and storage model.
 - `docs/UI_SPEC.md`: planned UI pages, components, and validation behavior.
+- `docs/CUSTOM_GPT_INSTRUCTIONS.md`: instructions copied into the Custom GPT.
 - `docs/CHANGELOG.md`: notable project changes.
 - `README.md`: project overview and quick start.
 
@@ -81,6 +84,7 @@ vercel.json
 - Prefer small, explicit functions over broad utility modules.
 - Do not commit `.env`, credentials, generated secrets, `node_modules/`, or `dist/`.
 - Update `openapi.yaml` whenever endpoint behavior or response shape changes.
+- Update `custom-gpt-actions.yaml` whenever an exposed GPT Action changes.
 - Update README or docs when setup steps, endpoint behavior, data models, or deployment steps change.
 - Do not implement code when the user asks for documentation only.
 
@@ -89,6 +93,8 @@ vercel.json
 Persistent storage:
 
 ```env
+API_KEY=
+OWNER_USER_ID=
 STORAGE_DRIVER=upstash
 UPSTASH_REDIS_REST_URL=
 UPSTASH_REDIS_REST_TOKEN=
@@ -148,6 +154,6 @@ Upstash Redis setup
 -> local build/test
 -> Vercel deploy
 -> production smoke test
--> update openapi.yaml production server URL
+-> update both OpenAPI server URLs
 -> connect Custom GPT Actions
 ```

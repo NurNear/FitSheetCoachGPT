@@ -89,22 +89,24 @@ Exit criteria:
 - `openapi.yaml` matches every implemented route.
 - Confirmed coach output can be saved through write endpoints with expected responses.
 
-## Phase 5: AI Coach-Mediated Input Experience
+## Phase 5: Custom GPT-Mediated Input Experience
 
-Goal: Add backend-mediated AI coach analysis for text and image input before saving records.
+Goal: Use Custom GPT as the text/image input and analysis surface, with the backend serving GPT Actions for confirmed persistence and dashboard reads.
 
 Deliverables:
 
-- `POST /api/coach/analyze` endpoint for text/image analysis foundation.
+- Custom GPT instruction requirements for Thai/English text and image analysis.
+- Restricted GPT Actions schema in `custom-gpt-actions.yaml`.
 - `POST /api/coach/confirm` endpoint for explicit save confirmation.
-- Frontend input surface for Thai/English text and image upload.
-- Candidate review UI with edit and confirm actions.
-- Coaching response panel with follow-up questions when confidence is low.
-- Behavior insight requirements based only on submitted inputs and stored logs.
+- Dashboard and seven-day behavior endpoints available to GPT Actions.
+- Candidate review and confirmation handled in the ChatGPT conversation.
+- Owner binding with `OWNER_USER_ID`.
+- Behavior insights based only on submitted inputs and stored logs.
 
 Exit criteria:
 
-- A user can submit text or image input and receive structured log candidates.
+- A user can submit text or image input in Custom GPT and receive structured log candidates.
 - No health log is saved until the user explicitly confirms.
-- OpenAI credentials remain server-side.
+- The backend does not require `OPENAI_API_KEY` for the primary Custom GPT flow.
+- Custom GPT Actions can save confirmed records and read dashboard summaries.
 - Behavior insights do not rely on hidden tracking.

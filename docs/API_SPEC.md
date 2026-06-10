@@ -24,7 +24,7 @@ All `/api/*` endpoints use the `x-api-key` header when `API_KEY` is configured:
 x-api-key: your-api-key
 ```
 
-If `API_KEY` is not configured, the middleware allows requests without the header. Production should configure `API_KEY`.
+Local development may omit `API_KEY` and `OWNER_USER_ID`. Production startup requires both values, and every protected request must use the configured owner ID.
 
 ## Response Envelope
 
@@ -53,6 +53,16 @@ Unauthorized responses use:
 {
   "ok": false,
   "error": "Unauthorized"
+}
+```
+
+Owner mismatches use:
+
+```json
+{
+  "ok": false,
+  "error": "Forbidden",
+  "message": "The requested userId is not allowed."
 }
 ```
 
@@ -300,54 +310,47 @@ The implemented backend API contract lives in:
 openapi.yaml
 ```
 
-Update the schema whenever endpoint behavior, request shape, response shape, or authentication behavior changes.
+The restricted schema imported into Custom GPT lives in:
 
-## AI Coach API Foundation
+```txt
+custom-gpt-actions.yaml
+```
 
-These endpoints provide the backend foundation for the AI coach-mediated tracker. The analyze endpoint currently returns a safe follow-up response without calling OpenAI; the confirm endpoint persists a selected candidate only when explicit confirmation is present.
+Update both schemas when an Actions endpoint changes. Direct profile and log write endpoints stay in the full backend contract only.
 
-### POST /api/coach/analyze
+## Custom GPT Actions API Foundation
 
-Accepts user text and optional image input through the backend coach route. The frontend sends input to this backend endpoint, never directly to OpenAI.
-
-Request fields:
-
-- `userId`: required string.
-- `message`: optional free text in Thai or English.
-- `image`: optional image upload or image reference strategy.
-- `contextDate`: optional `yyyy-mm-dd`.
-
-Response fields:
-
-- `coachingMessage`: natural-language advice or follow-up question.
-- `candidates`: structured profile, food, exercise, or weight log candidates.
-- `confidence`: model confidence or review status.
-- `assumptions`: notes about inferred values.
-- `needsConfirmation`: true when candidates are ready for confirmation; false when the coach is asking a follow-up question or OpenAI analysis is not connected yet.
+Custom GPT analyzes text and images inside ChatGPT. The backend accepts only structured confirmed candidates and read requests; it does not receive raw images or require `OPENAI_API_KEY`.
 
 ### POST /api/coach/confirm
 
-Persists one selected AI-proposed candidate after explicit user confirmation. Candidate data is validated against the same rules as existing profile and log endpoints.
+Persists one selected Custom GPT-proposed candidate after explicit user confirmation. Candidate data is validated against the same rules as existing profile and log endpoints.
 
 Request fields:
 
 - `userId`: required string.
 - `candidate`: selected structured candidate.
 - `edits`: optional audit metadata for user corrections. Send final corrected values in `candidate.data`.
-- `confirm`: required boolean or explicit confirmation intent.
+- `confirm`: must be the literal value `true`.
 
 Behavior:
 
 - Reject requests without explicit confirmation.
-- Save confirmed candidates through existing profile/log services or endpoints.
+- Reject a candidate whose nested `userId` differs from the top-level `userId`.
+- Save confirmed candidates through the existing normalization and storage services.
 - Return the saved record and any post-save coaching message.
 
 ### GET /api/coach/behavior
 
-Future endpoint for behavior insights derived only from submitted inputs and stored logs.
+Returns structured insights for the seven calendar days ending on optional `endDate`.
 
-Planned behavior:
+- Response includes `period`, data `coverage`, and five insight categories.
+- Protein evaluation uses `1.2 g/kg` as a coaching reference only when protein fields are complete.
+- Calorie balance uses the profile target and a `+/-300 kcal` reference range only on calorie-complete food days.
+- Exercise reports recorded frequency and duration without treating missing days as missed workouts.
+- Weight trend requires at least two weight records in the period.
+- Missing or incomplete data returns `insufficient_data` rather than an inferred behavior.
 
-- Detect patterns such as low-protein days, missed workouts, repeated calorie surplus or deficit, and weight trend changes.
-- Avoid hidden tracking or browser activity monitoring.
-- Include evidence from stored records when possible.
+### Owner Binding
+
+When `OWNER_USER_ID` is configured, every protected request must use that exact `userId`. A different ID returns `403 Forbidden`. Production startup also requires `API_KEY`.

@@ -1,6 +1,13 @@
 import { z } from "zod";
 
 const loggedAt = z.string().datetime().optional();
+export const isoDateSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/)
+  .refine((value) => {
+    const parsed = new Date(`${value}T00:00:00.000Z`);
+    return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+  }, "Invalid calendar date");
 
 export const profileMetricsSchema = z.object({
   userId: z.string().min(1),
@@ -42,5 +49,5 @@ export const weightLogSchema = z.object({
 
 export const summaryQuerySchema = z.object({
   userId: z.string().min(1),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional()
+  date: isoDateSchema.optional()
 });

@@ -56,22 +56,48 @@ export interface DashboardSummary {
   recommendation: string;
 }
 
-export type CoachCandidateType = "profile" | "food" | "exercise" | "weight";
-export type CoachConfidence = "low" | "medium" | "high" | "needs_follow_up";
+export type BehaviorInsightType =
+  | "protein_consistency"
+  | "calorie_balance"
+  | "exercise_frequency"
+  | "weight_trend"
+  | "logging_completeness";
 
-export interface CoachImageInput {
-  mimeType: string;
-  dataUrl?: string;
-  url?: string;
-  altText?: string;
+export type BehaviorInsightStatus = "on_track" | "attention" | "neutral" | "insufficient_data";
+
+export interface BehaviorInsightEvidence {
+  date: string;
+  value: number | string;
+  unit?: string;
+  note?: string;
 }
 
-export interface CoachAnalyzeRequest {
+export interface BehaviorInsight {
+  type: BehaviorInsightType;
+  status: BehaviorInsightStatus;
+  metrics: Record<string, number | string>;
+  evidence: BehaviorInsightEvidence[];
+}
+
+export interface BehaviorInsightsResponse {
   userId: string;
-  message?: string;
-  image?: CoachImageInput;
-  contextDate?: string;
+  period: {
+    startDate: string;
+    endDate: string;
+    days: 7;
+  };
+  coverage: {
+    anyLoggedDays: number;
+    foodLoggedDays: number;
+    calorieCompleteDays: number;
+    proteinCompleteDays: number;
+    exerciseLoggedDays: number;
+    weightEntries: number;
+  };
+  insights: BehaviorInsight[];
 }
+
+export type CoachCandidateType = "profile" | "food" | "exercise" | "weight";
 
 export type CoachCandidateData =
   | (Omit<ProfileMetrics, "loggedAt"> & { loggedAt?: string })
@@ -101,14 +127,6 @@ export type CoachLogCandidate =
       type: "weight";
       data: Omit<WeightLog, "loggedAt"> & { loggedAt?: string };
     });
-
-export interface CoachAnalyzeResponse {
-  coachingMessage: string;
-  candidates: CoachLogCandidate[];
-  confidence: CoachConfidence;
-  assumptions: string[];
-  needsConfirmation: boolean;
-}
 
 export interface CoachConfirmRequest {
   userId: string;

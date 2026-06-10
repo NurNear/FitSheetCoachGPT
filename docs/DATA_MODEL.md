@@ -70,6 +70,8 @@ export interface DashboardSummary {
 }
 ```
 
+`BehaviorInsightsResponse` contains a seven-day period, explicit data coverage, and structured protein, calorie, exercise, weight, and logging insights. Each insight includes metrics and stored-record evidence so Custom GPT can explain it in the user's language.
+
 ## Validation Rules
 
 ### ProfileMetrics
@@ -180,8 +182,18 @@ export interface StorageService {
   getFoodLogs(userId: string, date: string): Promise<FoodLog[]>;
   getExerciseLogs(userId: string, date: string): Promise<ExerciseLog[]>;
   getLatestWeight(userId: string): Promise<WeightLog | undefined>;
+  getWeightLogs(userId: string): Promise<WeightLog[]>;
 }
 ```
+
+## Behavior Insight Rules
+
+- The period is seven UTC calendar days including `endDate`.
+- Missing days remain unknown and are not counted as zero intake or missed exercise.
+- Protein evaluation requires complete protein fields for the evaluated food day and uses `1.2 g/kg` as a coaching reference.
+- Calorie evaluation requires complete calorie values for the evaluated food day and compares net calories with the profile target using a `+/-300 kcal` range.
+- Exercise frequency reports only confirmed sessions.
+- Weight direction requires at least two records and treats changes within `0.2 kg` as stable.
 
 ### Upstash Redis Keys
 

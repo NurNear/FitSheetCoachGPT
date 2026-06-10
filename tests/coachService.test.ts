@@ -3,13 +3,21 @@ import { confirmCoachCandidate } from "../src/services/coachService.js";
 import type { StorageService } from "../src/services/storageService.js";
 import type { CoachConfirmRequest, ExerciseLog, FoodLog, ProfileMetrics, WeightLog } from "../src/types/domain.js";
 
-function createMemoryStorage(): StorageService & { weights: WeightLog[] } {
+function createMemoryStorage(): StorageService & {
+  profiles: ProfileMetrics[];
+  foods: FoodLog[];
+  exercises: ExerciseLog[];
+  weights: WeightLog[];
+} {
   const profiles: ProfileMetrics[] = [];
   const foods: FoodLog[] = [];
   const exercises: ExerciseLog[] = [];
   const weights: WeightLog[] = [];
 
   return {
+    profiles,
+    foods,
+    exercises,
     weights,
     async saveProfile(profile) {
       profiles.push(profile);
@@ -38,6 +46,9 @@ function createMemoryStorage(): StorageService & { weights: WeightLog[] } {
     },
     async getLatestWeight(userId) {
       return weights.filter((weight) => weight.userId === userId).at(-1);
+    },
+    async getWeightLogs(userId) {
+      return weights.filter((weight) => weight.userId === userId);
     }
   };
 }
@@ -57,8 +68,96 @@ describe("coachService", () => {
       }
     } as unknown as CoachConfirmRequest;
 
-    await expect(confirmCoachCandidate(storage, request)).rejects.toThrow("Explicit confirmation is required");
+    await expect(confirmCoachCandidate(storage, request)).rejects.toMatchObject({
+      status: 400,
+      code: "ValidationError"
+    });
     expect(storage.weights).toHaveLength(0);
+  });
+
+  it("rejects a candidate whose userId does not match the confirmation", async () => {
+    const storage = createMemoryStorage();
+
+    await expect(
+      confirmCoachCandidate(storage, {
+        userId: "demo",
+        confirm: true,
+        candidate: {
+          type: "weight",
+          data: {
+            userId: "someone-else",
+            weightKg: 80
+          }
+        }
+      })
+    ).rejects.toMatchObject({
+      status: 400,
+      code: "ValidationError"
+    });
+  });
+
+  it("saves a confirmed profile candidate", async () => {
+    const storage = createMemoryStorage();
+    const response = await confirmCoachCandidate(storage, {
+      userId: "demo",
+      confirm: true,
+      candidate: {
+        type: "profile",
+        data: {
+          userId: "demo",
+          sex: "male",
+          age: 35,
+          heightCm: 175,
+          weightKg: 75,
+          activityLevel: "moderate",
+          goal: "lose_fat"
+        }
+      }
+    });
+
+    expect(response.saved).toMatchObject({ userId: "demo", weightKg: 75 });
+    expect(storage.profiles[0]?.loggedAt).toEqual(expect.any(String));
+  });
+
+  it("saves and normalizes a confirmed food candidate", async () => {
+    const storage = createMemoryStorage();
+    const response = await confirmCoachCandidate(storage, {
+      userId: "demo",
+      confirm: true,
+      candidate: {
+        type: "food",
+        data: {
+          userId: "demo",
+          name: "Chicken rice",
+          proteinG: 35,
+          carbsG: 60,
+          fatG: 12
+        }
+      }
+    });
+
+    expect(response.saved).toMatchObject({ userId: "demo", calories: 488 });
+    expect(storage.foods).toHaveLength(1);
+  });
+
+  it("saves and normalizes a confirmed exercise candidate", async () => {
+    const storage = createMemoryStorage();
+    const response = await confirmCoachCandidate(storage, {
+      userId: "demo",
+      confirm: true,
+      candidate: {
+        type: "exercise",
+        data: {
+          userId: "demo",
+          name: "Walk",
+          durationMinutes: 30,
+          intensity: "low"
+        }
+      }
+    });
+
+    expect(response.saved).toMatchObject({ userId: "demo", caloriesBurned: 120 });
+    expect(storage.exercises).toHaveLength(1);
   });
 
   it("saves a confirmed weight candidate", async () => {

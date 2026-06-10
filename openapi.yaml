@@ -1,8 +1,8 @@
 openapi: 3.1.0
 info:
   title: FitSheet Coach API
-  version: 0.1.0
-  description: Implemented backend API for AI coach-confirmed health tracking records.
+  version: 0.2.0
+  description: Full backend contract for owner-bound, confirm-before-save health tracking.
 servers:
   - url: https://fit-sheet-coach-gpt.vercel.app
 security:
@@ -16,10 +16,17 @@ paths:
       responses:
         "200":
           description: API is healthy
+          content:
+            application/json:
+              example:
+                ok: true
+                data:
+                  service: fitsheet-coach-gpt
+                  status: healthy
   /api/profile/metrics:
     post:
       operationId: saveProfileMetrics
-      summary: Save user profile metrics for BMR and TDEE calculations
+      summary: Save profile metrics and calculate fitness targets
       requestBody:
         required: true
         content:
@@ -28,49 +35,21 @@ paths:
               $ref: "#/components/schemas/ProfileMetricsInput"
       responses:
         "201":
-          description: Saved profile metrics with calculated targets
+          description: Saved profile metrics
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProfileMetricsResponse"
-  /api/coach/analyze:
-    post:
-      operationId: analyzeCoachInput
-      summary: Analyze user text or image input for coach review
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CoachAnalyzeRequest"
-      responses:
-        "200":
-          description: Coach analysis response with candidates or follow-up guidance
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/CoachAnalyzeResponse"
-  /api/coach/confirm:
-    post:
-      operationId: confirmCoachCandidate
-      summary: Confirm and persist one AI-proposed coach candidate
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CoachConfirmRequest"
-      responses:
-        "201":
-          description: Confirmed candidate saved through existing storage services
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/CoachConfirmResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
   /api/logs/food:
     post:
       operationId: logFood
-      summary: Log food intake
+      summary: Save a normalized food log
       requestBody:
         required: true
         content:
@@ -79,15 +58,21 @@ paths:
               $ref: "#/components/schemas/FoodLogInput"
       responses:
         "201":
-          description: Saved normalized food log
+          description: Saved food log
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/FoodLogResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
   /api/logs/exercise:
     post:
       operationId: logExercise
-      summary: Log exercise
+      summary: Save a normalized exercise log
       requestBody:
         required: true
         content:
@@ -96,15 +81,21 @@ paths:
               $ref: "#/components/schemas/ExerciseLogInput"
       responses:
         "201":
-          description: Saved normalized exercise log
+          description: Saved exercise log
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ExerciseLogResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
   /api/logs/weight:
     post:
       operationId: logWeight
-      summary: Log body weight
+      summary: Save a weight log
       requestBody:
         required: true
         content:
@@ -118,42 +109,220 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WeightLogResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /api/coach/confirm:
+    post:
+      operationId: confirmCoachCandidate
+      summary: Confirm and persist one Custom GPT-proposed candidate
+      description: Call only after the user explicitly confirms the displayed candidate.
+      x-openai-isConsequential: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CoachConfirmRequest"
+            example:
+              userId: demo
+              candidate:
+                type: food
+                data:
+                  userId: demo
+                  name: Chicken rice
+                  quantity: 1 plate
+                  proteinG: 35
+                  carbsG: 60
+                  fatG: 12
+                  mealType: lunch
+                confidence: 0.82
+                assumptions:
+                  - Portion size was estimated from the submitted image.
+              confirm: true
+      responses:
+        "201":
+          description: Confirmed candidate saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoachConfirmResponse"
+              example:
+                ok: true
+                data:
+                  coachingMessage: Food log saved after confirmation.
+                  saved:
+                    userId: demo
+                    name: Chicken rice
+                    quantity: 1 plate
+                    calories: 488
+                    proteinG: 35
+                    carbsG: 60
+                    fatG: 12
+                    mealType: lunch
+                    loggedAt: "2026-06-10T12:00:00.000Z"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
   /api/dashboard/summary:
     get:
       operationId: getDashboardSummary
-      summary: Get daily dashboard summary
+      summary: Get a daily dashboard summary
       parameters:
-        - name: userId
-          in: query
-          required: true
-          schema:
-            type: string
+        - $ref: "#/components/parameters/UserId"
         - name: date
           in: query
           required: false
+          description: UTC calendar date. Defaults to the current UTC date.
           schema:
-            type: string
-            pattern: "^\\d{4}-\\d{2}-\\d{2}$"
+            $ref: "#/components/schemas/IsoDate"
       responses:
         "200":
-          description: Dashboard summary
+          description: Daily dashboard summary
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/DashboardSummaryResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /api/coach/behavior:
+    get:
+      operationId: getBehaviorInsights
+      summary: Get structured insights from the last seven days of stored records
+      description: Missing days are reported as missing coverage and are not treated as zero intake or missed exercise.
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+        - name: endDate
+          in: query
+          required: false
+          description: Inclusive UTC end date. Defaults to the current UTC date.
+          schema:
+            $ref: "#/components/schemas/IsoDate"
+      responses:
+        "200":
+          description: Seven-day structured behavior insights
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BehaviorInsightsResponse"
+              example:
+                ok: true
+                data:
+                  userId: demo
+                  period:
+                    startDate: "2026-06-04"
+                    endDate: "2026-06-10"
+                    days: 7
+                  coverage:
+                    anyLoggedDays: 5
+                    foodLoggedDays: 4
+                    calorieCompleteDays: 3
+                    proteinCompleteDays: 3
+                    exerciseLoggedDays: 3
+                    weightEntries: 2
+                  insights:
+                    - type: weight_trend
+                      status: neutral
+                      metrics:
+                        firstWeightKg: 75
+                        latestWeightKg: 74.5
+                        deltaKg: -0.5
+                        direction: decreasing
+                        weightEntries: 2
+                      evidence:
+                        - date: "2026-06-04"
+                          value: 75
+                          unit: kg
+                        - date: "2026-06-10"
+                          value: 74.5
+                          unit: kg
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 components:
   securitySchemes:
     ApiKeyAuth:
       type: apiKey
       in: header
       name: x-api-key
+  parameters:
+    UserId:
+      name: userId
+      in: query
+      required: true
+      description: Must equal the configured OWNER_USER_ID when owner binding is enabled.
+      schema:
+        type: string
+        minLength: 1
+  responses:
+    ValidationError:
+      description: Request validation failed
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            ok: false
+            error: ValidationError
+            message: Candidate userId must match the confirmation userId.
+    Unauthorized:
+      description: API key is missing or invalid
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            ok: false
+            error: Unauthorized
+    Forbidden:
+      description: The request targets a user other than OWNER_USER_ID
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            ok: false
+            error: Forbidden
+            message: The requested userId is not allowed.
   schemas:
+    IsoDate:
+      type: string
+      pattern: "^\\d{4}-\\d{2}-\\d{2}$"
+      example: "2026-06-10"
+    ErrorResponse:
+      type: object
+      required: [ok, error]
+      properties:
+        ok:
+          const: false
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
     ProfileMetricsInput:
       type: object
       required: [userId, sex, age, heightCm, weightKg, activityLevel]
+      additionalProperties: false
       properties:
         userId:
           type: string
+          minLength: 1
         sex:
           type: string
           enum: [male, female]
@@ -163,10 +332,12 @@ components:
           maximum: 120
         heightCm:
           type: number
-          minimum: 1
+          exclusiveMinimum: 0
+          maximum: 260
         weightKg:
           type: number
-          minimum: 1
+          exclusiveMinimum: 0
+          maximum: 500
         activityLevel:
           type: string
           enum: [sedentary, light, moderate, active, very_active]
@@ -179,11 +350,14 @@ components:
     FoodLogInput:
       type: object
       required: [userId, name]
+      additionalProperties: false
       properties:
         userId:
           type: string
+          minLength: 1
         name:
           type: string
+          minLength: 1
         quantity:
           type: string
         calories:
@@ -207,14 +381,18 @@ components:
     ExerciseLogInput:
       type: object
       required: [userId, name, durationMinutes]
+      additionalProperties: false
       properties:
         userId:
           type: string
+          minLength: 1
         name:
           type: string
+          minLength: 1
         durationMinutes:
           type: number
-          minimum: 1
+          exclusiveMinimum: 0
+          maximum: 1440
         caloriesBurned:
           type: number
           minimum: 0
@@ -227,44 +405,38 @@ components:
     WeightLogInput:
       type: object
       required: [userId, weightKg]
+      additionalProperties: false
       properties:
         userId:
           type: string
+          minLength: 1
         weightKg:
           type: number
-          minimum: 1
+          exclusiveMinimum: 0
+          maximum: 500
         loggedAt:
           type: string
           format: date-time
-    CoachImageInput:
-      type: object
-      required: [mimeType]
-      properties:
-        mimeType:
-          type: string
-        dataUrl:
-          type: string
-        url:
-          type: string
-          format: uri
-        altText:
-          type: string
-    CoachAnalyzeRequest:
-      type: object
-      required: [userId]
-      properties:
-        userId:
-          type: string
-        message:
-          type: string
-        image:
-          $ref: "#/components/schemas/CoachImageInput"
-        contextDate:
-          type: string
-          pattern: "^\\d{4}-\\d{2}-\\d{2}$"
-      description: Either message or image must be supplied.
     CoachCandidate:
       oneOf:
+        - $ref: "#/components/schemas/ProfileCandidate"
+        - $ref: "#/components/schemas/FoodCandidate"
+        - $ref: "#/components/schemas/ExerciseCandidate"
+        - $ref: "#/components/schemas/WeightCandidate"
+    CandidateMetadata:
+      type: object
+      properties:
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        assumptions:
+          type: array
+          items:
+            type: string
+    ProfileCandidate:
+      allOf:
+        - $ref: "#/components/schemas/CandidateMetadata"
         - type: object
           required: [type, data]
           properties:
@@ -272,14 +444,9 @@ components:
               const: profile
             data:
               $ref: "#/components/schemas/ProfileMetricsInput"
-            confidence:
-              type: number
-              minimum: 0
-              maximum: 1
-            assumptions:
-              type: array
-              items:
-                type: string
+    FoodCandidate:
+      allOf:
+        - $ref: "#/components/schemas/CandidateMetadata"
         - type: object
           required: [type, data]
           properties:
@@ -287,14 +454,9 @@ components:
               const: food
             data:
               $ref: "#/components/schemas/FoodLogInput"
-            confidence:
-              type: number
-              minimum: 0
-              maximum: 1
-            assumptions:
-              type: array
-              items:
-                type: string
+    ExerciseCandidate:
+      allOf:
+        - $ref: "#/components/schemas/CandidateMetadata"
         - type: object
           required: [type, data]
           properties:
@@ -302,14 +464,9 @@ components:
               const: exercise
             data:
               $ref: "#/components/schemas/ExerciseLogInput"
-            confidence:
-              type: number
-              minimum: 0
-              maximum: 1
-            assumptions:
-              type: array
-              items:
-                type: string
+    WeightCandidate:
+      allOf:
+        - $ref: "#/components/schemas/CandidateMetadata"
         - type: object
           required: [type, data]
           properties:
@@ -317,57 +474,31 @@ components:
               const: weight
             data:
               $ref: "#/components/schemas/WeightLogInput"
-            confidence:
-              type: number
-              minimum: 0
-              maximum: 1
-            assumptions:
-              type: array
-              items:
-                type: string
-    CoachAnalyzeResponse:
-      type: object
-      properties:
-        ok:
-          type: boolean
-        data:
-          type: object
-          properties:
-            coachingMessage:
-              type: string
-            candidates:
-              type: array
-              items:
-                $ref: "#/components/schemas/CoachCandidate"
-            confidence:
-              type: string
-              enum: [low, medium, high, needs_follow_up]
-            assumptions:
-              type: array
-              items:
-                type: string
-            needsConfirmation:
-              type: boolean
     CoachConfirmRequest:
       type: object
       required: [userId, candidate, confirm]
+      additionalProperties: false
       properties:
         userId:
           type: string
+          minLength: 1
         candidate:
           $ref: "#/components/schemas/CoachCandidate"
         edits:
           type: object
+          description: Optional correction metadata. Final corrected values belong in candidate.data.
           additionalProperties: true
         confirm:
           const: true
     CoachConfirmResponse:
       type: object
+      required: [ok, data]
       properties:
         ok:
-          type: boolean
+          const: true
         data:
           type: object
+          required: [coachingMessage, saved]
           properties:
             coachingMessage:
               type: string
@@ -379,18 +510,32 @@ components:
                 - $ref: "#/components/schemas/WeightLogInput"
     DashboardSummaryResponse:
       type: object
+      required: [ok, data]
       properties:
         ok:
-          type: boolean
+          const: true
         data:
           type: object
+          required: [userId, date, totals, recommendation]
           properties:
             userId:
               type: string
             date:
-              type: string
+              $ref: "#/components/schemas/IsoDate"
             totals:
               type: object
+              required: [caloriesIn, caloriesOut, proteinG, carbsG, fatG]
+              properties:
+                caloriesIn:
+                  type: number
+                caloriesOut:
+                  type: number
+                proteinG:
+                  type: number
+                carbsG:
+                  type: number
+                fatG:
+                  type: number
             latestWeightKg:
               type: number
             bmr:
@@ -401,22 +546,107 @@ components:
               type: number
             recommendation:
               type: string
-    ProfileMetricsResponse:
+    BehaviorInsightsResponse:
       type: object
+      required: [ok, data]
       properties:
         ok:
-          type: boolean
+          const: true
         data:
           type: object
+          required: [userId, period, coverage, insights]
+          properties:
+            userId:
+              type: string
+            period:
+              type: object
+              required: [startDate, endDate, days]
+              properties:
+                startDate:
+                  $ref: "#/components/schemas/IsoDate"
+                endDate:
+                  $ref: "#/components/schemas/IsoDate"
+                days:
+                  const: 7
+            coverage:
+              $ref: "#/components/schemas/BehaviorCoverage"
+            insights:
+              type: array
+              items:
+                $ref: "#/components/schemas/BehaviorInsight"
+    BehaviorCoverage:
+      type: object
+      required:
+        - anyLoggedDays
+        - foodLoggedDays
+        - calorieCompleteDays
+        - proteinCompleteDays
+        - exerciseLoggedDays
+        - weightEntries
+      properties:
+        anyLoggedDays:
+          type: integer
+        foodLoggedDays:
+          type: integer
+        calorieCompleteDays:
+          type: integer
+        proteinCompleteDays:
+          type: integer
+        exerciseLoggedDays:
+          type: integer
+        weightEntries:
+          type: integer
+    BehaviorInsight:
+      type: object
+      required: [type, status, metrics, evidence]
+      properties:
+        type:
+          type: string
+          enum:
+            - protein_consistency
+            - calorie_balance
+            - exercise_frequency
+            - weight_trend
+            - logging_completeness
+        status:
+          type: string
+          enum: [on_track, attention, neutral, insufficient_data]
+        metrics:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: number
+              - type: string
+        evidence:
+          type: array
+          items:
+            $ref: "#/components/schemas/BehaviorEvidence"
+    BehaviorEvidence:
+      type: object
+      required: [date, value]
+      properties:
+        date:
+          $ref: "#/components/schemas/IsoDate"
+        value:
+          oneOf:
+            - type: number
+            - type: string
+        unit:
+          type: string
+        note:
+          type: string
+    ProfileMetricsResponse:
+      type: object
+      required: [ok, data]
+      properties:
+        ok:
+          const: true
+        data:
+          type: object
+          required: [profile, bmr, tdee, calorieTarget]
           properties:
             profile:
-              allOf:
-                - $ref: "#/components/schemas/ProfileMetricsInput"
-                - type: object
-                  properties:
-                    loggedAt:
-                      type: string
-                      format: date-time
+              $ref: "#/components/schemas/ProfileMetricsInput"
             bmr:
               type: number
             tdee:
@@ -425,46 +655,25 @@ components:
               type: number
     FoodLogResponse:
       type: object
+      required: [ok, data]
       properties:
         ok:
-          type: boolean
+          const: true
         data:
-          allOf:
-            - $ref: "#/components/schemas/FoodLogInput"
-            - type: object
-              properties:
-                calories:
-                  type: number
-                  description: Provided calories or calories estimated from macros.
-                loggedAt:
-                  type: string
-                  format: date-time
+          $ref: "#/components/schemas/FoodLogInput"
     ExerciseLogResponse:
       type: object
+      required: [ok, data]
       properties:
         ok:
-          type: boolean
+          const: true
         data:
-          allOf:
-            - $ref: "#/components/schemas/ExerciseLogInput"
-            - type: object
-              properties:
-                caloriesBurned:
-                  type: number
-                  description: Provided calories or calories estimated from duration and intensity.
-                loggedAt:
-                  type: string
-                  format: date-time
+          $ref: "#/components/schemas/ExerciseLogInput"
     WeightLogResponse:
       type: object
+      required: [ok, data]
       properties:
         ok:
-          type: boolean
+          const: true
         data:
-          allOf:
-            - $ref: "#/components/schemas/WeightLogInput"
-            - type: object
-              properties:
-                loggedAt:
-                  type: string
-                  format: date-time
+          $ref: "#/components/schemas/WeightLogInput"

@@ -1,14 +1,14 @@
 # FitSheet Coach
 
-FitSheet Coach is a TypeScript Express API for an AI coach-mediated personal health tracker. The frontend sends text and image input to a backend coach layer, the backend uses OpenAI to propose structured health logs and coaching advice, and records are saved only after explicit user confirmation.
+FitSheet Coach is a TypeScript Express API for a Custom GPT-mediated personal health tracker. The user sends Thai/English text and images to a Custom GPT in ChatGPT, the Custom GPT interprets the input and calls this backend through GPT Actions, and records are saved only after explicit user confirmation.
 
 ## Architecture
 
 ```txt
 User
--> Frontend
--> Backend Coach API
--> OpenAI
+-> Custom GPT in ChatGPT
+-> GPT Actions
+-> Backend API
 -> Backend Storage API
 -> Upstash Redis
 -> Dashboard summary
@@ -22,7 +22,7 @@ Storage is Upstash Redis for Vercel deployment. Temporary local testing can use 
 - TypeScript
 - Express
 - Zod
-- OpenAI API
+- Custom GPT Actions
 - Upstash Redis
 - Vercel Functions
 - OpenAPI 3.1
@@ -32,9 +32,11 @@ Storage is Upstash Redis for Vercel deployment. Temporary local testing can use 
 
 - Core API scaffold is implemented.
 - Profile, food, exercise, weight, health, and dashboard summary endpoints exist.
+- Confirm-before-save coach persistence and seven-day behavior insights are implemented.
+- Protected routes can be bound to one owner with `OWNER_USER_ID`.
 - Upstash Redis is the persistent storage driver.
 - Local JSON file storage has been removed.
-- AI coach requirements are documented in `docs/PRD.md` and `docs/UI_SPEC.md`; analyze and confirm endpoints now have backend foundation routes, while OpenAI analysis and UI code are not implemented yet.
+- Coach requirements are documented in `docs/PRD.md` and `docs/UI_SPEC.md`; the active product direction is Custom GPT input and image analysis through GPT Actions, with the backend focused on validation, confirmed persistence, and dashboard summaries.
 
 ## Local Machine Constraint
 
@@ -106,15 +108,10 @@ Optional API protection:
 
 ```env
 API_KEY=
+OWNER_USER_ID=
 ```
 
-Planned AI coach integration:
-
-```env
-OPENAI_API_KEY=
-```
-
-`OPENAI_API_KEY` must stay server-side. The frontend should call backend coach endpoints, not OpenAI directly.
+Production requires both `API_KEY` and `OWNER_USER_ID`. Custom GPT integration does not require `OPENAI_API_KEY`; ChatGPT handles text and image analysis.
 
 ## Implemented API Endpoints
 
@@ -124,19 +121,10 @@ OPENAI_API_KEY=
 - `POST /api/logs/exercise`
 - `POST /api/logs/weight`
 - `GET /api/dashboard/summary?userId=demo`
-
-See [docs/API_SPEC.md](docs/API_SPEC.md) for examples.
-
-## AI Coach Endpoints
-
-- `POST /api/coach/analyze`
 - `POST /api/coach/confirm`
-
-## Future AI Coach Endpoint
-
 - `GET /api/coach/behavior?userId=demo`
 
-Behavior insights are documented as a future requirement and should be added to [openapi.yaml](openapi.yaml) after implementation.
+See [docs/API_SPEC.md](docs/API_SPEC.md) for examples.
 
 ## Project Documentation
 
@@ -147,6 +135,7 @@ Behavior insights are documented as a future requirement and should be added to 
 - [API specification](docs/API_SPEC.md)
 - [Data model](docs/DATA_MODEL.md)
 - [UI specification](docs/UI_SPEC.md)
+- [Custom GPT instructions](docs/CUSTOM_GPT_INSTRUCTIONS.md)
 - [Changelog](docs/CHANGELOG.md)
 - [Vercel deployment](docs/vercel-deploy.md)
 
@@ -169,22 +158,24 @@ src/
 tests/
 docs/
 openapi.yaml
+custom-gpt-actions.yaml
 vercel.json
 ```
 
-## AI Coach Integration
+## Custom GPT Integration
 
-Use [openapi.yaml](openapi.yaml) as the contract for implemented backend endpoints. Future AI coach endpoints should be documented in [docs/API_SPEC.md](docs/API_SPEC.md) before implementation and added to the schema after they exist.
+Use [openapi.yaml](openapi.yaml) as the complete backend contract. Import [custom-gpt-actions.yaml](custom-gpt-actions.yaml) into Custom GPT so it can access only health, confirmed persistence, dashboard summaries, and behavior insights. Apply [the Custom GPT instructions](docs/CUSTOM_GPT_INSTRUCTIONS.md) after replacing `<OWNER_USER_ID>`.
 
-Before wiring the AI coach flow to production:
+Before wiring the Custom GPT flow to production:
 
 1. Run local build and tests.
 2. Configure Upstash Redis.
-3. Configure `OPENAI_API_KEY` server-side.
+3. Configure `API_KEY` and `OWNER_USER_ID`.
 4. Deploy to Vercel.
-5. Smoke test production endpoints.
-6. Update the `servers` URL in `openapi.yaml`.
-7. Configure the frontend to call the deployed backend coach API URL.
+5. Run `scripts/production-smoke-test.sh` against the deployment.
+6. Update the `servers` URL in both OpenAPI files.
+7. Configure Custom GPT Actions with `custom-gpt-actions.yaml`.
+8. Test text, image, edit, reject, confirmation, dashboard, and behavior flows.
 
 ## Verification
 

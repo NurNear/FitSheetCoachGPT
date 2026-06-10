@@ -2,7 +2,7 @@
 
 ## Status
 
-FitSheet Coach is an AI coach-mediated tracker. No production browser UI is implemented yet, but the active UI requirement is a simple Express-served frontend that sends text and image input to backend coach endpoints. The frontend must not call OpenAI directly.
+FitSheet Coach is a Custom GPT-mediated tracker. The active input requirement is a Custom GPT in ChatGPT: users submit Thai/English text and images there, review the GPT's interpretation in the conversation, and the GPT calls the backend through GPT Actions after explicit confirmation.
 
 ## UX Principles
 
@@ -17,10 +17,9 @@ FitSheet Coach is an AI coach-mediated tracker. No production browser UI is impl
 
 ```txt
 User text/image
--> Frontend coach input
--> POST /api/coach/analyze
--> AI coaching response + structured log candidates
--> User reviews, edits, and confirms
+-> Custom GPT in ChatGPT
+-> GPT analyzes and proposes structured log candidates
+-> User reviews, edits, and confirms in ChatGPT
 -> POST /api/coach/confirm
 -> Existing profile/log storage
 -> Dashboard summary
@@ -28,42 +27,38 @@ User text/image
 
 ## Pages
 
-### 1. Coach Input
+### 1. Custom GPT Input
 
-Purpose: Let users submit Thai or English text and optional images for AI analysis.
+Purpose: Let users submit Thai or English text and optional images in ChatGPT for AI analysis.
 
-Endpoint:
+Primary surface:
 
 ```txt
-POST /api/coach/analyze
+Custom GPT conversation
 ```
 
 Inputs:
 
-- User ID.
+- Fixed owner ID configured in the Custom GPT instructions and backend environment.
 - Free-text message.
-- Optional image upload or image reference.
+- Optional image upload in ChatGPT.
 - Optional context date.
 
 Components:
 
-- User ID selector or persisted user setting.
-- Multiline message input.
-- Image upload control with preview and remove action.
-- Date picker.
-- Submit button.
-- Loading state.
-- Error state.
+- Custom GPT instructions for extracting profile, food, exercise, and weight candidates.
+- Follow-up question behavior when input is incomplete.
+- GPT Actions configuration using `openapi.yaml`.
 
 Behavior:
 
-- Send input to the backend coach endpoint.
-- Do not send images or OpenAI credentials directly from the frontend to OpenAI.
-- If the coach needs more information, show the follow-up question instead of a save button.
+- Keep image analysis inside ChatGPT.
+- Do not send raw images to the backend unless a future endpoint explicitly requires it.
+- If the coach needs more information, ask a follow-up question before calling a save action.
 
 ### 2. AI Review and Confirmation
 
-Purpose: Let users inspect AI-proposed records before saving.
+Purpose: Let users inspect Custom GPT-proposed records before saving.
 
 Endpoint:
 
@@ -73,7 +68,7 @@ POST /api/coach/confirm
 
 Content:
 
-- Coaching message.
+- Coaching message in ChatGPT.
 - One or more structured log candidates.
 - Candidate type: profile, food, exercise, or weight.
 - Confidence notes and assumptions.
@@ -81,12 +76,11 @@ Content:
 
 Components:
 
-- Candidate cards.
-- Edit controls matching existing validation rules.
-- Confirm button.
-- Reject or discard button.
-- Follow-up question panel.
-- Save success and validation error states.
+- Conversational candidate summary.
+- User correction prompts matching existing validation rules.
+- Explicit confirmation phrase before calling the backend.
+- Reject or discard option.
+- Save success and validation error responses from GPT Actions.
 
 Behavior:
 
@@ -129,16 +123,16 @@ Components:
 
 Purpose: Help the coach point out patterns from submitted and stored user data.
 
-Future endpoint:
+Endpoint:
 
 ```txt
-GET /api/coach/behavior?userId=<userId>
+GET /api/coach/behavior?userId=<userId>&endDate=<yyyy-mm-dd>
 ```
 
-Insights may include:
+Structured insights include:
 
 - Repeated low-protein days.
-- Missed workout patterns.
+- Recorded exercise frequency.
 - Consistent calorie surplus or deficit.
 - Weight trend changes.
 - Frequently incomplete logs that need follow-up questions.
@@ -148,6 +142,7 @@ Privacy rules:
 - Do not infer behavior from hidden tracking.
 - Do not use browser activity outside submitted app input.
 - Show the evidence source for each insight when possible.
+- Treat missing coverage as unknown, not as zero intake or missed exercise.
 
 ### 5. Manual Correction
 
@@ -171,10 +166,10 @@ Future API needs:
 ## Global Components
 
 - API status indicator from `GET /health`.
-- User ID selector or persisted user setting.
+- Fixed owner identity; do not expose a user ID selector in the personal MVP.
 - Date picker.
-- Toast notifications for analyze, confirm, save success, and validation errors.
-- Error panel for unauthorized, AI analysis, upload, and server errors.
+- Toast notifications for confirm, save success, and validation errors.
+- Error panel for unauthorized, forbidden, upload, and server errors.
 - Loading indicators for network requests.
 
 ## Accessibility
@@ -187,8 +182,7 @@ Future API needs:
 
 ## Security and Privacy
 
-- Keep `OPENAI_API_KEY` and API keys server-side only.
-- Do not expose server-only keys in client-side code.
+- Keep backend `API_KEY` restricted to trusted GPT Actions configuration and trusted clients.
+- Do not expose backend keys in public client-side code.
 - Avoid storing sensitive health data or image payloads in browser local storage unless intentionally designed.
-- Production UI should use a server-side proxy or authenticated session model.
-- Images should be uploaded only for analysis that the user explicitly initiates.
+- Images should be analyzed only when the user explicitly sends them to Custom GPT.

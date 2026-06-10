@@ -9,25 +9,15 @@ Vercel Functions should not use local JSON files for durable storage. Production
 Required environment variables:
 
 ```env
+API_KEY=
+OWNER_USER_ID=
 STORAGE_DRIVER=upstash
 UPSTASH_REDIS_REST_URL=
 UPSTASH_REDIS_REST_TOKEN=
 REDIS_KEY_PREFIX=fitsheet
 ```
 
-Optional API protection:
-
-```env
-API_KEY=
-```
-
-Planned AI coach integration:
-
-```env
-OPENAI_API_KEY=
-```
-
-Keep `OPENAI_API_KEY` server-side only. The frontend should call backend coach endpoints rather than OpenAI directly.
+Production startup requires `API_KEY` and `OWNER_USER_ID`. Custom GPT integration does not require `OPENAI_API_KEY`; ChatGPT handles text and image analysis.
 
 ## Upstash Setup
 
@@ -64,59 +54,33 @@ npm run build
 
 ## Smoke Test
 
-After deploy, replace `<vercel-url>` with your project URL:
+After deploy, run the automated smoke test from the repository root:
 
 ```bash
-curl https://<vercel-url>/health
+BASE_URL=https://<vercel-url> \
+API_KEY=<production-api-key> \
+OWNER_USER_ID=<production-owner-user-id> \
+./scripts/production-smoke-test.sh
 ```
 
-Create a profile:
+The script verifies:
 
-```bash
-curl -X POST https://<vercel-url>/api/profile/metrics \
-  -H "Content-Type: application/json" \
-  -H "x-api-key: your-api-key" \
-  -d '{
-    "userId": "demo",
-    "sex": "male",
-    "age": 35,
-    "heightCm": 175,
-    "weightKg": 75,
-    "activityLevel": "moderate",
-    "goal": "lose_fat"
-  }'
-```
+- Public health access.
+- Missing and invalid API-key rejection.
+- Owner binding.
+- Confirmation-required rejection.
+- Confirmed profile, food, exercise, and weight writes.
+- Dashboard and seven-day behavior read-back.
 
-Log food:
-
-```bash
-curl -X POST https://<vercel-url>/api/logs/food \
-  -H "Content-Type: application/json" \
-  -H "x-api-key: your-api-key" \
-  -d '{
-    "userId": "demo",
-    "name": "Chicken rice",
-    "quantity": "1 plate",
-    "proteinG": 35,
-    "carbsG": 60,
-    "fatG": 12,
-    "mealType": "lunch"
-  }'
-```
-
-Get a summary:
-
-```bash
-curl -H "x-api-key: your-api-key" "https://<vercel-url>/api/dashboard/summary?userId=demo"
-```
+The smoke test appends clearly named records to the configured Upstash database. Use a preview deployment and separate database when production data must remain clean. The script requires `curl` and `jq`.
 
 ## After Deploy
 
-After Vercel gives you the production URL, update `openapi.yaml`:
+After Vercel gives you the production URL, update both `openapi.yaml` and `custom-gpt-actions.yaml`:
 
 ```yaml
 servers:
   - url: https://your-project.vercel.app
 ```
 
-Then configure the frontend to call the deployed backend API URL and keep `openapi.yaml` aligned with implemented production endpoints. Add planned AI coach endpoints to the schema only after they are implemented.
+Import `custom-gpt-actions.yaml` into Custom GPT, configure API-key authentication, and apply `docs/CUSTOM_GPT_INSTRUCTIONS.md` after replacing `<OWNER_USER_ID>`.

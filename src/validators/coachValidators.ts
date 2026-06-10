@@ -1,29 +1,11 @@
 import { z } from "zod";
-import { exerciseLogSchema, foodLogSchema, profileMetricsSchema, weightLogSchema } from "./logValidators.js";
-
-const contextDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
-
-export const coachImageSchema = z
-  .object({
-    mimeType: z.string().min(1),
-    dataUrl: z.string().min(1).optional(),
-    url: z.string().url().optional(),
-    altText: z.string().optional()
-  })
-  .refine((image) => image.dataUrl || image.url, {
-    message: "Image input requires either dataUrl or url"
-  });
-
-export const coachAnalyzeSchema = z
-  .object({
-    userId: z.string().min(1),
-    message: z.string().min(1).optional(),
-    image: coachImageSchema.optional(),
-    contextDate: contextDate.optional()
-  })
-  .refine((input) => input.message || input.image, {
-    message: "Either message or image is required"
-  });
+import {
+  exerciseLogSchema,
+  foodLogSchema,
+  isoDateSchema,
+  profileMetricsSchema,
+  weightLogSchema
+} from "./logValidators.js";
 
 const candidateBaseSchema = z.object({
   confidence: z.number().min(0).max(1).optional(),
@@ -54,4 +36,9 @@ export const coachConfirmSchema = z.object({
   candidate: coachCandidateSchema,
   edits: z.record(z.unknown()).optional(),
   confirm: z.literal(true)
+});
+
+export const behaviorQuerySchema = z.object({
+  userId: z.string().min(1),
+  endDate: isoDateSchema.optional()
 });

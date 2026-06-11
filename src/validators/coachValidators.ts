@@ -42,3 +42,39 @@ export const behaviorQuerySchema = z.object({
   userId: z.string().min(1),
   endDate: isoDateSchema.optional()
 });
+
+export const coachSummaryQuerySchema = z
+  .object({
+    userId: z.string().min(1),
+    scope: z.enum(["today", "range", "all"]),
+    date: isoDateSchema.optional(),
+    startDate: isoDateSchema.optional(),
+    endDate: isoDateSchema.optional()
+  })
+  .superRefine((value, context) => {
+    if (value.scope !== "range") return;
+
+    if (!value.startDate) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["startDate"],
+        message: "startDate is required when scope=range"
+      });
+    }
+
+    if (!value.endDate) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["endDate"],
+        message: "endDate is required when scope=range"
+      });
+    }
+
+    if (value.startDate && value.endDate && value.startDate > value.endDate) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["endDate"],
+        message: "endDate must be on or after startDate"
+      });
+    }
+  });

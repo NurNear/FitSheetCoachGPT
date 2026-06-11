@@ -1,8 +1,8 @@
 openapi: 3.1.0
 info:
   title: FitSheet Coach API
-  version: 0.3.0
-  description: Full backend contract for owner-bound, confirm-before-save health tracking.
+  version: 0.4.0
+  description: Full backend contract for owner-bound, confirm-before-save health tracking and detailed reports.
 servers:
   - url: https://fit-sheet-coach-gpt.vercel.app
 security:
@@ -276,6 +276,49 @@ paths:
                         - date: "2026-06-10"
                           value: 74.5
                           unit: kg
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /api/coach/summary:
+    get:
+      operationId: getCoachSummary
+      summary: Get a detailed health report for today, a date range, or all records since the first weight
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+        - name: scope
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [today, range, all]
+        - name: date
+          in: query
+          required: false
+          description: Explicit user-local calendar date for scope=today or the current end date for scope=all.
+          schema:
+            $ref: "#/components/schemas/IsoDate"
+        - name: startDate
+          in: query
+          required: false
+          description: Inclusive start date. Required for scope=range.
+          schema:
+            $ref: "#/components/schemas/IsoDate"
+        - name: endDate
+          in: query
+          required: false
+          description: Inclusive end date. Required for scope=range.
+          schema:
+            $ref: "#/components/schemas/IsoDate"
+      responses:
+        "200":
+          description: Detailed report with itemized food, exercise, weight, totals, coverage, and analysis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoachSummaryResponse"
         "400":
           $ref: "#/components/responses/ValidationError"
         "401":
@@ -577,6 +620,135 @@ components:
               type: number
             recommendation:
               type: string
+    CoachSummaryResponse:
+      type: object
+      required: [ok, data]
+      properties:
+        ok:
+          const: true
+        data:
+          type: object
+          required: [userId, period, coverage, totals, averages, weight, days, analysis]
+          properties:
+            userId:
+              type: string
+            period:
+              $ref: "#/components/schemas/CoachSummaryPeriod"
+            coverage:
+              $ref: "#/components/schemas/CoachSummaryCoverage"
+            totals:
+              $ref: "#/components/schemas/CoachSummaryTotals"
+            averages:
+              $ref: "#/components/schemas/CoachSummaryAverages"
+            weight:
+              $ref: "#/components/schemas/CoachSummaryWeight"
+            days:
+              type: array
+              items:
+                $ref: "#/components/schemas/CoachSummaryDay"
+            analysis:
+              type: array
+              items:
+                $ref: "#/components/schemas/CoachSummaryAnalysis"
+    CoachSummaryPeriod:
+      type: object
+      required: [scope, startDate, endDate, calendarDays]
+      properties:
+        scope:
+          type: string
+          enum: [today, range, all]
+        startDate:
+          $ref: "#/components/schemas/IsoDate"
+        endDate:
+          $ref: "#/components/schemas/IsoDate"
+        calendarDays:
+          type: integer
+    CoachSummaryCoverage:
+      type: object
+      required: [recordedDays, foodLoggedDays, calorieCompleteDays, exerciseLoggedDays, weightEntries]
+      properties:
+        recordedDays:
+          type: integer
+        foodLoggedDays:
+          type: integer
+        calorieCompleteDays:
+          type: integer
+        exerciseLoggedDays:
+          type: integer
+        weightEntries:
+          type: integer
+    CoachSummaryTotals:
+      type: object
+      required: [caloriesIn, caloriesOut, proteinG, carbsG, fatG, exerciseMinutes]
+      properties:
+        caloriesIn:
+          type: number
+        caloriesOut:
+          type: number
+        proteinG:
+          type: number
+        carbsG:
+          type: number
+        fatG:
+          type: number
+        exerciseMinutes:
+          type: number
+    CoachSummaryAverages:
+      type: object
+      properties:
+        caloriesInPerFoodLoggedDay:
+          type: number
+        exerciseMinutesPerExerciseDay:
+          type: number
+    CoachSummaryWeight:
+      type: object
+      properties:
+        firstInPeriod:
+          $ref: "#/components/schemas/WeightLogInput"
+        latestInPeriod:
+          $ref: "#/components/schemas/WeightLogInput"
+        latestKnown:
+          $ref: "#/components/schemas/WeightLogInput"
+        deltaKg:
+          type: number
+    CoachSummaryDay:
+      type: object
+      required: [date, foods, exercises, weights, totals]
+      properties:
+        date:
+          $ref: "#/components/schemas/IsoDate"
+        foods:
+          type: array
+          items:
+            $ref: "#/components/schemas/FoodLogInput"
+        exercises:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExerciseLogInput"
+        weights:
+          type: array
+          items:
+            $ref: "#/components/schemas/WeightLogInput"
+        totals:
+          $ref: "#/components/schemas/CoachSummaryTotals"
+    CoachSummaryAnalysis:
+      type: object
+      required: [type, status, summary, metrics]
+      properties:
+        type:
+          type: string
+          enum: [calorie_balance, exercise, weight_trend, logging_coverage]
+        status:
+          type: string
+          enum: [on_track, attention, neutral, insufficient_data]
+        summary:
+          type: string
+        metrics:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: number
+              - type: string
     BehaviorInsightsResponse:
       type: object
       required: [ok, data]

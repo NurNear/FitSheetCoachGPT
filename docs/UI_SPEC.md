@@ -102,6 +102,14 @@ Primary data source:
 GET /api/dashboard/summary?userId=<userId>&date=<yyyy-mm-dd>
 ```
 
+Detailed conversational summaries use:
+
+```txt
+GET /api/coach/summary?userId=<userId>&scope=today&date=<yyyy-mm-dd>
+GET /api/coach/summary?userId=<userId>&scope=range&startDate=<yyyy-mm-dd>&endDate=<yyyy-mm-dd>
+GET /api/coach/summary?userId=<userId>&scope=all
+```
+
 Content:
 
 - Date selector.

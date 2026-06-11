@@ -80,6 +80,17 @@ export interface DashboardSummary {
 
 `DailyFoodLogs` returns confirmed food records for one date in chronological order. An empty `foods` array means no confirmed food records were found for that date.
 
+`CoachSummaryReport` contains:
+
+- `period`: `today`, an inclusive date range, or all dates from the first confirmed weight.
+- `coverage`: recorded days and complete calorie coverage.
+- `totals` and averages calculated only from confirmed records.
+- `weight`: first/latest period weights, latest known weight, and period change.
+- `days`: itemized food, exercise, and weight records grouped by date.
+- `analysis`: structured calorie, exercise, weight, and logging-coverage explanations.
+
+Days without records are unknown and are not represented as zero intake or missed exercise.
+
 ## Validation Rules
 
 ### ProfileMetrics

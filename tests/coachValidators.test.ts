@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { behaviorQuerySchema, coachConfirmSchema } from "../src/validators/coachValidators.js";
+import {
+  behaviorQuerySchema,
+  coachConfirmSchema,
+  coachSummaryQuerySchema
+} from "../src/validators/coachValidators.js";
 import { foodLogsQuerySchema } from "../src/validators/logValidators.js";
 
 describe("coachValidators", () => {
@@ -76,5 +80,41 @@ describe("coachValidators", () => {
       userId: "demo",
       date: "2026-06-11"
     });
+  });
+
+  it("accepts today with an explicit local date and all without dates", () => {
+    expect(
+      coachSummaryQuerySchema.parse({
+        userId: "demo",
+        scope: "today",
+        date: "2026-06-11"
+      })
+    ).toEqual({
+      userId: "demo",
+      scope: "today",
+      date: "2026-06-11"
+    });
+    expect(coachSummaryQuerySchema.parse({ userId: "demo", scope: "all" })).toEqual({
+      userId: "demo",
+      scope: "all"
+    });
+  });
+
+  it("requires an ordered start and end date for range summaries", () => {
+    expect(() =>
+      coachSummaryQuerySchema.parse({
+        userId: "demo",
+        scope: "range",
+        startDate: "2026-06-11",
+        endDate: "2026-06-10"
+      })
+    ).toThrow();
+    expect(() =>
+      coachSummaryQuerySchema.parse({
+        userId: "demo",
+        scope: "range",
+        startDate: "2026-06-10"
+      })
+    ).toThrow();
   });
 });

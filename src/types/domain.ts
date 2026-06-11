@@ -62,6 +62,61 @@ export interface DashboardSummary {
   recommendation: string;
 }
 
+export type CoachSummaryScope = "today" | "range" | "all";
+export type CoachSummaryAnalysisStatus = "on_track" | "attention" | "neutral" | "insufficient_data";
+
+export interface CoachSummaryAnalysis {
+  type: "calorie_balance" | "exercise" | "weight_trend" | "logging_coverage";
+  status: CoachSummaryAnalysisStatus;
+  summary: string;
+  metrics: Record<string, number | string>;
+}
+
+export interface CoachSummaryDay {
+  date: string;
+  foods: FoodLog[];
+  exercises: ExerciseLog[];
+  weights: WeightLog[];
+  totals: {
+    caloriesIn: number;
+    caloriesOut: number;
+    proteinG: number;
+    carbsG: number;
+    fatG: number;
+    exerciseMinutes: number;
+  };
+}
+
+export interface CoachSummaryReport {
+  userId: string;
+  period: {
+    scope: CoachSummaryScope;
+    startDate: string;
+    endDate: string;
+    calendarDays: number;
+  };
+  coverage: {
+    recordedDays: number;
+    foodLoggedDays: number;
+    calorieCompleteDays: number;
+    exerciseLoggedDays: number;
+    weightEntries: number;
+  };
+  totals: CoachSummaryDay["totals"];
+  averages: {
+    caloriesInPerFoodLoggedDay?: number;
+    exerciseMinutesPerExerciseDay?: number;
+  };
+  weight: {
+    firstInPeriod?: WeightLog;
+    latestInPeriod?: WeightLog;
+    latestKnown?: WeightLog;
+    deltaKg?: number;
+  };
+  days: CoachSummaryDay[];
+  analysis: CoachSummaryAnalysis[];
+}
+
 export type BehaviorInsightType =
   | "protein_consistency"
   | "calorie_balance"

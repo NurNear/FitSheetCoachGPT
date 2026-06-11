@@ -22,3 +22,15 @@ export function addUtcDays(date: string, days: number): string {
 export function dateRangeEnding(endDate: string, days: number): string[] {
   return Array.from({ length: days }, (_, index) => addUtcDays(endDate, index - days + 1));
 }
+
+export function dateRange(startDate: string, endDate: string): string[] {
+  const dates: string[] = [];
+  let current = startDate;
+
+  while (current <= endDate) {
+    dates.push(current);
+    current = addUtcDays(current, 1);
+  }
+
+  return dates;
+}

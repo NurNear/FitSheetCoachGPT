@@ -2,6 +2,8 @@ import { Redis } from "@upstash/redis";
 import { env } from "../config/env.js";
 import type { ExerciseLog, FoodLog, ProfileMetrics, WeightLog } from "../types/domain.js";
 
+const PIPELINE_DATE_BATCH_SIZE = 90;
+
 export interface StorageService {
   saveProfile(profile: ProfileMetrics): Promise<ProfileMetrics>;
   saveFood(log: FoodLog): Promise<FoodLog>;
@@ -9,7 +11,9 @@ export interface StorageService {
   saveWeight(log: WeightLog): Promise<WeightLog>;
   getLatestProfile(userId: string): Promise<ProfileMetrics | undefined>;
   getFoodLogs(userId: string, date: string): Promise<FoodLog[]>;
+  getFoodLogsForDates?(userId: string, dates: string[]): Promise<FoodLog[][]>;
   getExerciseLogs(userId: string, date: string): Promise<ExerciseLog[]>;
+  getExerciseLogsForDates?(userId: string, dates: string[]): Promise<ExerciseLog[][]>;
   getLatestWeight(userId: string): Promise<WeightLog | undefined>;
   getWeightLogs(userId: string): Promise<WeightLog[]>;
 }
@@ -67,8 +71,22 @@ class MemoryStorageService implements StorageService {
     return this.store.foods.filter((food) => food.userId === userId && sameDate(food.loggedAt, date));
   }
 
+  async getFoodLogsForDates(userId: string, dates: string[]): Promise<FoodLog[][]> {
+    return dates.map((date) =>
+      this.store.foods.filter((food) => food.userId === userId && sameDate(food.loggedAt, date))
+    );
+  }
+
   async getExerciseLogs(userId: string, date: string): Promise<ExerciseLog[]> {
     return this.store.exercises.filter((exercise) => exercise.userId === userId && sameDate(exercise.loggedAt, date));
+  }
+
+  async getExerciseLogsForDates(userId: string, dates: string[]): Promise<ExerciseLog[][]> {
+    return dates.map((date) =>
+      this.store.exercises.filter(
+        (exercise) => exercise.userId === userId && sameDate(exercise.loggedAt, date)
+      )
+    );
   }
 
   async getLatestWeight(userId: string): Promise<WeightLog | undefined> {
@@ -116,8 +134,16 @@ class UpstashRedisStorageService implements StorageService {
     return this.getList<FoodLog>(this.dateKey("foods", userId, date));
   }
 
+  async getFoodLogsForDates(userId: string, dates: string[]): Promise<FoodLog[][]> {
+    return this.getListsForDates<FoodLog>("foods", userId, dates);
+  }
+
   async getExerciseLogs(userId: string, date: string): Promise<ExerciseLog[]> {
     return this.getList<ExerciseLog>(this.dateKey("exercises", userId, date));
+  }
+
+  async getExerciseLogsForDates(userId: string, dates: string[]): Promise<ExerciseLog[][]> {
+    return this.getListsForDates<ExerciseLog>("exercises", userId, dates);
   }
 
   async getLatestWeight(userId: string): Promise<WeightLog | undefined> {
@@ -139,6 +165,35 @@ class UpstashRedisStorageService implements StorageService {
       const parsed = this.parseJson<T>(value);
       return parsed ? [parsed] : [];
     });
+  }
+
+  private async getListsForDates<T>(
+    collection: string,
+    userId: string,
+    dates: string[]
+  ): Promise<T[][]> {
+    if (dates.length === 0) return [];
+
+    const lists: T[][] = [];
+
+    for (let index = 0; index < dates.length; index += PIPELINE_DATE_BATCH_SIZE) {
+      const batch = dates.slice(index, index + PIPELINE_DATE_BATCH_SIZE);
+      const pipeline = this.redis.pipeline();
+      batch.forEach((date) => {
+        pipeline.lrange<string>(this.dateKey(collection, userId, date), 0, -1);
+      });
+      const values = await pipeline.exec<string[][]>();
+      lists.push(
+        ...values.map((items) =>
+          items.flatMap((value) => {
+            const parsed = this.parseJson<T>(value);
+            return parsed ? [parsed] : [];
+          })
+        )
+      );
+    }
+
+    return lists;
   }
 
   private parseJson<T>(value: unknown): T | undefined {

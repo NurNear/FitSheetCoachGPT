@@ -1,8 +1,8 @@
 openapi: 3.1.0
 info:
   title: FitSheet Coach GPT Actions
-  version: 0.3.0
-  description: Owner-bound actions for confirmed health-log persistence and read-only summaries.
+  version: 0.4.0
+  description: Owner-bound actions for confirmed health-log persistence and detailed read-only reports.
 servers:
   - url: https://fit-sheet-coach-gpt.vercel.app
 security:
@@ -127,6 +127,57 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BehaviorInsightsResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /api/coach/summary:
+    get:
+      operationId: getCoachSummary
+      summary: Read a detailed report for today, a requested range, or all records since the first weight
+      description: Returns itemized foods with calories, exercises, weights, totals, coverage, and structured analysis.
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          description: Must equal the owner user ID configured for this GPT.
+          schema:
+            type: string
+            minLength: 1
+        - name: scope
+          in: query
+          required: true
+          description: Use today for a daily summary, range for explicit dates, and all for the first weight through today.
+          schema:
+            type: string
+            enum: [today, range, all]
+        - name: date
+          in: query
+          required: false
+          description: User-local calendar date. Send this when scope=today or scope=all.
+          schema:
+            $ref: "#/components/schemas/IsoDate"
+        - name: startDate
+          in: query
+          required: false
+          description: Inclusive start date. Required when scope=range.
+          schema:
+            $ref: "#/components/schemas/IsoDate"
+        - name: endDate
+          in: query
+          required: false
+          description: Inclusive end date. Required when scope=range.
+          schema:
+            $ref: "#/components/schemas/IsoDate"
+      responses:
+        "200":
+          description: Detailed health report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoachSummaryResponse"
         "400":
           $ref: "#/components/responses/ValidationError"
         "401":
@@ -264,6 +315,40 @@ components:
         mealType:
           type: string
           enum: [breakfast, lunch, dinner, snack]
+        loggedAt:
+          type: string
+          format: date-time
+    ExerciseRecord:
+      type: object
+      required: [userId, name, durationMinutes, loggedAt]
+      additionalProperties: false
+      properties:
+        userId:
+          type: string
+        name:
+          type: string
+        durationMinutes:
+          type: number
+          exclusiveMinimum: 0
+        caloriesBurned:
+          type: number
+          minimum: 0
+        intensity:
+          type: string
+          enum: [low, moderate, high]
+        loggedAt:
+          type: string
+          format: date-time
+    WeightRecord:
+      type: object
+      required: [userId, weightKg, loggedAt]
+      additionalProperties: false
+      properties:
+        userId:
+          type: string
+        weightKg:
+          type: number
+          exclusiveMinimum: 0
         loggedAt:
           type: string
           format: date-time
@@ -426,6 +511,135 @@ components:
               type: number
             recommendation:
               type: string
+    CoachSummaryResponse:
+      type: object
+      required: [ok, data]
+      properties:
+        ok:
+          const: true
+        data:
+          type: object
+          required: [userId, period, coverage, totals, averages, weight, days, analysis]
+          properties:
+            userId:
+              type: string
+            period:
+              $ref: "#/components/schemas/CoachSummaryPeriod"
+            coverage:
+              $ref: "#/components/schemas/CoachSummaryCoverage"
+            totals:
+              $ref: "#/components/schemas/CoachSummaryTotals"
+            averages:
+              $ref: "#/components/schemas/CoachSummaryAverages"
+            weight:
+              $ref: "#/components/schemas/CoachSummaryWeight"
+            days:
+              type: array
+              items:
+                $ref: "#/components/schemas/CoachSummaryDay"
+            analysis:
+              type: array
+              items:
+                $ref: "#/components/schemas/CoachSummaryAnalysis"
+    CoachSummaryPeriod:
+      type: object
+      required: [scope, startDate, endDate, calendarDays]
+      properties:
+        scope:
+          type: string
+          enum: [today, range, all]
+        startDate:
+          $ref: "#/components/schemas/IsoDate"
+        endDate:
+          $ref: "#/components/schemas/IsoDate"
+        calendarDays:
+          type: integer
+    CoachSummaryCoverage:
+      type: object
+      required: [recordedDays, foodLoggedDays, calorieCompleteDays, exerciseLoggedDays, weightEntries]
+      properties:
+        recordedDays:
+          type: integer
+        foodLoggedDays:
+          type: integer
+        calorieCompleteDays:
+          type: integer
+        exerciseLoggedDays:
+          type: integer
+        weightEntries:
+          type: integer
+    CoachSummaryTotals:
+      type: object
+      required: [caloriesIn, caloriesOut, proteinG, carbsG, fatG, exerciseMinutes]
+      properties:
+        caloriesIn:
+          type: number
+        caloriesOut:
+          type: number
+        proteinG:
+          type: number
+        carbsG:
+          type: number
+        fatG:
+          type: number
+        exerciseMinutes:
+          type: number
+    CoachSummaryAverages:
+      type: object
+      properties:
+        caloriesInPerFoodLoggedDay:
+          type: number
+        exerciseMinutesPerExerciseDay:
+          type: number
+    CoachSummaryWeight:
+      type: object
+      properties:
+        firstInPeriod:
+          $ref: "#/components/schemas/WeightRecord"
+        latestInPeriod:
+          $ref: "#/components/schemas/WeightRecord"
+        latestKnown:
+          $ref: "#/components/schemas/WeightRecord"
+        deltaKg:
+          type: number
+    CoachSummaryDay:
+      type: object
+      required: [date, foods, exercises, weights, totals]
+      properties:
+        date:
+          $ref: "#/components/schemas/IsoDate"
+        foods:
+          type: array
+          items:
+            $ref: "#/components/schemas/FoodRecord"
+        exercises:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExerciseRecord"
+        weights:
+          type: array
+          items:
+            $ref: "#/components/schemas/WeightRecord"
+        totals:
+          $ref: "#/components/schemas/CoachSummaryTotals"
+    CoachSummaryAnalysis:
+      type: object
+      required: [type, status, summary, metrics]
+      properties:
+        type:
+          type: string
+          enum: [calorie_balance, exercise, weight_trend, logging_coverage]
+        status:
+          type: string
+          enum: [on_track, attention, neutral, insufficient_data]
+        summary:
+          type: string
+        metrics:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: number
+              - type: string
     DailyFoodLogsResponse:
       type: object
       required: [ok, data]

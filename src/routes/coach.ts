@@ -1,10 +1,15 @@
 import { Router } from "express";
 import { getBehaviorInsights } from "../services/behaviorService.js";
+import { getCoachSummary } from "../services/coachSummaryService.js";
 import { confirmCoachCandidate } from "../services/coachService.js";
 import { storage } from "../services/storageService.js";
 import { isoDate } from "../utils/date.js";
 import { ok } from "../utils/http.js";
-import { behaviorQuerySchema, coachConfirmSchema } from "../validators/coachValidators.js";
+import {
+  behaviorQuerySchema,
+  coachConfirmSchema,
+  coachSummaryQuerySchema
+} from "../validators/coachValidators.js";
 
 export const coachRouter = Router();
 
@@ -23,6 +28,16 @@ coachRouter.get("/behavior", async (req, res, next) => {
     const query = behaviorQuerySchema.parse(req.query);
     const insights = await getBehaviorInsights(storage, query.userId, query.endDate ?? isoDate());
     ok(res, insights);
+  } catch (error) {
+    next(error);
+  }
+});
+
+coachRouter.get("/summary", async (req, res, next) => {
+  try {
+    const query = coachSummaryQuerySchema.parse(req.query);
+    const report = await getCoachSummary(storage, query.userId, query, isoDate());
+    ok(res, report);
   } catch (error) {
     next(error);
   }

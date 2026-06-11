@@ -196,6 +196,17 @@ assert_json \
   ".ok == true and .data.date == \"${TODAY_UTC}\" and any(.data.foods[]; .name == \"Production smoke meal\")" \
   "daily food read-back"
 
+request 200 "coach summary read-back" \
+  --get \
+  -H "x-api-key: ${API_KEY}" \
+  --data-urlencode "userId=${OWNER_USER_ID}" \
+  --data-urlencode "scope=today" \
+  --data-urlencode "date=${TODAY_UTC}" \
+  "${BASE_URL}/api/coach/summary"
+assert_json \
+  ".ok == true and .data.period.startDate == \"${TODAY_UTC}\" and any(.data.days[].foods[]; .name == \"Production smoke meal\") and any(.data.days[].exercises[]; .name == \"Production smoke walk\")" \
+  "coach summary read-back"
+
 request 200 "behavior read-back" \
   --get \
   -H "x-api-key: ${API_KEY}" \

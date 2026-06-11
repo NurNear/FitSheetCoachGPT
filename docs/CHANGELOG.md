@@ -15,6 +15,7 @@ All notable project changes should be recorded here.
 - Added an automated production smoke test for authentication, owner binding, confirmed writes, and read-back.
 - Added automatic food calorie estimation guidance for text and image input when the user does not provide calories.
 - Added a read-only daily food-log action so Custom GPT can answer item-level meal-history questions.
+- Added detailed today, date-range, and all-time reports with itemized food, exercise, weight, coverage, totals, and analysis.
 
 ## 0.1.0 - Initial Setup
 

@@ -364,6 +364,28 @@ For food input, Custom GPT estimates calories when the user does not provide the
 
 When the user asks which foods were logged, Custom GPT calls `getDailyFoodLogs`. Dashboard summaries contain aggregate totals and must not be presented as item-level food history.
 
+### GET /api/coach/summary
+
+Returns one detailed report containing itemized food and exercise records, weight records, totals, averages, coverage, and structured analysis.
+
+Query parameters:
+
+- `userId`: required string.
+- `scope`: required `today`, `range`, or `all`.
+- `date`: user-local `yyyy-mm-dd` for `scope=today` or the current end date for `scope=all`.
+- `startDate`: inclusive start for `scope=range`.
+- `endDate`: inclusive end for `scope=range`.
+
+`scope=all` starts at the first confirmed weight and ends on the current date. Missing calendar days are unknown and are not counted as zero intake or missed exercise.
+
+Examples:
+
+```txt
+scope=today&date=2026-06-11
+scope=range&startDate=2026-06-10&endDate=2026-06-11
+scope=all&date=2026-06-11
+```
+
 ### POST /api/coach/confirm
 
 Persists one selected Custom GPT-proposed candidate after explicit user confirmation. Candidate data is validated against the same rules as existing profile and log endpoints.

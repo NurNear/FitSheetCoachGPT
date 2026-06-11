@@ -33,6 +33,7 @@ Storage is Upstash Redis for Vercel deployment. Temporary local testing can use 
 - Core API scaffold is implemented.
 - Profile, food, exercise, weight, health, and dashboard summary endpoints exist.
 - Confirmed food items can be read by date for Custom GPT meal-history questions.
+- Detailed reports combine itemized food, exercise, weight, totals, coverage, and analysis for today, a date range, or all records since the first weight.
 - Confirm-before-save coach persistence and seven-day behavior insights are implemented.
 - Custom GPT estimates food calories from text or images when the user does not provide them, then asks for confirmation.
 - Protected routes can be bound to one owner with `OWNER_USER_ID`.

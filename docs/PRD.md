@@ -72,6 +72,7 @@ Users need a fast way to describe meals, workouts, weight updates, and goals nat
 - Invalid requests return clear validation errors.
 - Daily summary includes calories in, calories out, macros, latest weight, BMR, TDEE, calorie target, and a recommendation when data exists.
 - Users can retrieve the confirmed food items behind a day's aggregate calorie total.
+- Summary requests can cover today, an explicit date range, or all records from the first confirmed weight, with itemized food, exercise, weight, and analysis.
 - Production deployment uses Upstash Redis without filesystem writes.
 - Local smoke testing can use temporary memory storage when persistence is not needed.
 

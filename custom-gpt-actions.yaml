@@ -28,14 +28,6 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/CoachConfirmRequest"
-            example:
-              userId: demo
-              candidate:
-                type: weight
-                data:
-                  userId: demo
-                  weightKg: 74.5
-              confirm: true
       responses:
         "201":
           description: Candidate saved
@@ -54,7 +46,13 @@ paths:
       operationId: getDashboardSummary
       summary: Read a daily health summary
       parameters:
-        - $ref: "#/components/parameters/UserId"
+        - name: userId
+          in: query
+          required: true
+          description: Must equal the owner user ID configured for this GPT.
+          schema:
+            type: string
+            minLength: 1
         - name: date
           in: query
           required: false
@@ -79,7 +77,13 @@ paths:
       summary: Read structured insights from seven days of confirmed records
       description: Treat missing coverage as unknown. Do not describe missing days as zero intake or missed exercise.
       parameters:
-        - $ref: "#/components/parameters/UserId"
+        - name: userId
+          in: query
+          required: true
+          description: Must equal the owner user ID configured for this GPT.
+          schema:
+            type: string
+            minLength: 1
         - name: endDate
           in: query
           required: false
@@ -104,14 +108,6 @@ components:
       type: apiKey
       in: header
       name: x-api-key
-  parameters:
-    UserId:
-      name: userId
-      in: query
-      required: true
-      schema:
-        type: string
-        minLength: 1
   responses:
     ValidationError:
       description: Invalid request or candidate
@@ -155,6 +151,7 @@ components:
       properties:
         userId:
           type: string
+          description: Use the exact owner user ID specified in the GPT instructions.
         sex:
           type: string
           enum: [male, female]
@@ -186,6 +183,7 @@ components:
       properties:
         userId:
           type: string
+          description: Use the exact owner user ID specified in the GPT instructions.
         name:
           type: string
         quantity:
@@ -215,6 +213,7 @@ components:
       properties:
         userId:
           type: string
+          description: Use the exact owner user ID specified in the GPT instructions.
         name:
           type: string
         durationMinutes:
@@ -237,6 +236,7 @@ components:
       properties:
         userId:
           type: string
+          description: Use the exact owner user ID specified in the GPT instructions.
         weightKg:
           type: number
           exclusiveMinimum: 0
@@ -300,6 +300,7 @@ components:
       properties:
         userId:
           type: string
+          description: Use the exact owner user ID specified in the GPT instructions.
         candidate:
           $ref: "#/components/schemas/CoachCandidate"
         edits:

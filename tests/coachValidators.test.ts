@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { behaviorQuerySchema, coachConfirmSchema } from "../src/validators/coachValidators.js";
+import { foodLogsQuerySchema } from "../src/validators/logValidators.js";
 
 describe("coachValidators", () => {
   it("requires explicit confirmation before persistence", () => {
@@ -63,5 +64,17 @@ describe("coachValidators", () => {
         endDate: "2026-02-30"
       })
     ).toThrow();
+  });
+
+  it("accepts a valid daily food logs query", () => {
+    expect(
+      foodLogsQuerySchema.parse({
+        userId: "demo",
+        date: "2026-06-11"
+      })
+    ).toEqual({
+      userId: "demo",
+      date: "2026-06-11"
+    });
   });
 });

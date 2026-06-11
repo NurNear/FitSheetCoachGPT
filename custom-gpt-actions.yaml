@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: FitSheet Coach GPT Actions
-  version: 0.2.0
+  version: 0.3.0
   description: Owner-bound actions for confirmed health-log persistence and read-only summaries.
 servers:
   - url: https://fit-sheet-coach-gpt.vercel.app
@@ -65,6 +65,37 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DashboardSummaryResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /api/logs/food:
+    get:
+      operationId: getDailyFoodLogs
+      summary: Read confirmed food items for one day
+      description: Use this action when the user asks what foods or meals were logged. Do not substitute dashboard totals for item details.
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          description: Must equal the owner user ID configured for this GPT.
+          schema:
+            type: string
+            minLength: 1
+        - name: date
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/IsoDate"
+      responses:
+        "200":
+          description: Confirmed food items for the requested day
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DailyFoodLogsResponse"
         "400":
           $ref: "#/components/responses/ValidationError"
         "401":
@@ -192,6 +223,35 @@ components:
           type: number
           minimum: 0
           description: Total kcal explicitly provided by the user or estimated by the GPT from the food description or image before confirmation.
+        proteinG:
+          type: number
+          minimum: 0
+        carbsG:
+          type: number
+          minimum: 0
+        fatG:
+          type: number
+          minimum: 0
+        mealType:
+          type: string
+          enum: [breakfast, lunch, dinner, snack]
+        loggedAt:
+          type: string
+          format: date-time
+    FoodRecord:
+      type: object
+      required: [userId, name, loggedAt]
+      additionalProperties: false
+      properties:
+        userId:
+          type: string
+        name:
+          type: string
+        quantity:
+          type: string
+        calories:
+          type: number
+          minimum: 0
         proteinG:
           type: number
           minimum: 0
@@ -366,6 +426,24 @@ components:
               type: number
             recommendation:
               type: string
+    DailyFoodLogsResponse:
+      type: object
+      required: [ok, data]
+      properties:
+        ok:
+          const: true
+        data:
+          type: object
+          required: [userId, date, foods]
+          properties:
+            userId:
+              type: string
+            date:
+              $ref: "#/components/schemas/IsoDate"
+            foods:
+              type: array
+              items:
+                $ref: "#/components/schemas/FoodRecord"
     BehaviorInsightsResponse:
       type: object
       required: [ok, data]

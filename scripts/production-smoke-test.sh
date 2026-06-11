@@ -186,6 +186,16 @@ assert_json \
   '.ok == true and .data.totals.caloriesIn >= 410 and .data.totals.caloriesOut >= 120 and .data.latestWeightKg == 74.8' \
   "dashboard read-back"
 
+request 200 "daily food read-back" \
+  --get \
+  -H "x-api-key: ${API_KEY}" \
+  --data-urlencode "userId=${OWNER_USER_ID}" \
+  --data-urlencode "date=${TODAY_UTC}" \
+  "${BASE_URL}/api/logs/food"
+assert_json \
+  ".ok == true and .data.date == \"${TODAY_UTC}\" and any(.data.foods[]; .name == \"Production smoke meal\")" \
+  "daily food read-back"
+
 request 200 "behavior read-back" \
   --get \
   -H "x-api-key: ${API_KEY}" \

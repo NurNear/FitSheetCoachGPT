@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: FitSheet Coach API
-  version: 0.2.0
+  version: 0.3.0
   description: Full backend contract for owner-bound, confirm-before-save health tracking.
 servers:
   - url: https://fit-sheet-coach-gpt.vercel.app
@@ -47,6 +47,35 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
   /api/logs/food:
+    get:
+      operationId: getDailyFoodLogs
+      summary: Read confirmed food logs for one day
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          description: Must equal the configured owner user ID when owner binding is enabled.
+          schema:
+            type: string
+            minLength: 1
+        - name: date
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/IsoDate"
+      responses:
+        "200":
+          description: Confirmed food logs for the requested day
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DailyFoodLogsResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
     post:
       operationId: logFood
       summary: Save a normalized food log
@@ -663,6 +692,24 @@ components:
           const: true
         data:
           $ref: "#/components/schemas/FoodLogInput"
+    DailyFoodLogsResponse:
+      type: object
+      required: [ok, data]
+      properties:
+        ok:
+          const: true
+        data:
+          type: object
+          required: [userId, date, foods]
+          properties:
+            userId:
+              type: string
+            date:
+              $ref: "#/components/schemas/IsoDate"
+            foods:
+              type: array
+              items:
+                $ref: "#/components/schemas/FoodLogInput"
     ExerciseLogResponse:
       type: object
       required: [ok, data]

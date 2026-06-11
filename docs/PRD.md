@@ -71,6 +71,7 @@ Users need a fast way to describe meals, workouts, weight updates, and goals nat
 - Confirmed candidates save profile, food, exercise, or weight data through existing storage services.
 - Invalid requests return clear validation errors.
 - Daily summary includes calories in, calories out, macros, latest weight, BMR, TDEE, calorie target, and a recommendation when data exists.
+- Users can retrieve the confirmed food items behind a day's aggregate calorie total.
 - Production deployment uses Upstash Redis without filesystem writes.
 - Local smoke testing can use temporary memory storage when persistence is not needed.
 

@@ -162,7 +162,7 @@ Content:
 
 Future API needs:
 
-- Read endpoints for raw food logs.
+- `GET /api/logs/food` provides read-only daily food records.
 - Read endpoints for raw exercise logs.
 - Read endpoints for weight history.
 - Update or delete endpoints if correction is supported.

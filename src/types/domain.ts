@@ -24,6 +24,12 @@ export interface FoodLog {
   loggedAt: string;
 }
 
+export interface DailyFoodLogs {
+  userId: string;
+  date: string;
+  foods: FoodLog[];
+}
+
 export interface ExerciseLog {
   userId: string;
   name: string;

@@ -37,6 +37,12 @@ export interface FoodLog {
   loggedAt: string;
 }
 
+export interface DailyFoodLogs {
+  userId: string;
+  date: string;
+  foods: FoodLog[];
+}
+
 export interface ExerciseLog {
   userId: string;
   name: string;
@@ -71,6 +77,8 @@ export interface DashboardSummary {
 ```
 
 `BehaviorInsightsResponse` contains a seven-day period, explicit data coverage, and structured protein, calorie, exercise, weight, and logging insights. Each insight includes metrics and stored-record evidence so Custom GPT can explain it in the user's language.
+
+`DailyFoodLogs` returns confirmed food records for one date in chronological order. An empty `foods` array means no confirmed food records were found for that date.
 
 ## Validation Rules
 

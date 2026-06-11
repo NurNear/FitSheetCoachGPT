@@ -47,7 +47,10 @@ export const weightLogSchema = z.object({
   loggedAt
 });
 
-export const summaryQuerySchema = z.object({
+const userDateQuerySchema = z.object({
   userId: z.string().min(1),
   date: isoDateSchema.optional()
 });
+
+export const summaryQuerySchema = userDateQuerySchema;
+export const foodLogsQuerySchema = userDateQuerySchema;

@@ -262,6 +262,44 @@ Response:
 }
 ```
 
+### GET /api/logs/food
+
+Returns confirmed food records for one calendar date in chronological order.
+
+Query parameters:
+
+- `userId`: required string.
+- `date`: optional `yyyy-mm-dd`; defaults to today's server date.
+
+Example:
+
+```bash
+curl "http://localhost:3000/api/logs/food?userId=demo&date=2026-06-11" \
+  -H "x-api-key: your-api-key"
+```
+
+Response:
+
+```json
+{
+  "ok": true,
+  "data": {
+    "userId": "demo",
+    "date": "2026-06-11",
+    "foods": [
+      {
+        "userId": "demo",
+        "name": "Chicken rice",
+        "quantity": "1 plate",
+        "calories": 650,
+        "mealType": "lunch",
+        "loggedAt": "2026-06-11T05:00:00.000Z"
+      }
+    ]
+  }
+}
+```
+
 ### GET /api/dashboard/summary
 
 Returns daily totals and a coaching recommendation.
@@ -323,6 +361,8 @@ Update both schemas when an Actions endpoint changes. Direct profile and log wri
 Custom GPT analyzes text and images inside ChatGPT. The backend accepts only structured confirmed candidates and read requests; it does not receive raw images or require `OPENAI_API_KEY`.
 
 For food input, Custom GPT estimates calories when the user does not provide them. It sends one central estimate in `candidate.data.calories`, records important portion and ingredient assumptions in candidate metadata, and shows the estimate to the user before confirmation. Direct backend food-log clients may still omit calories when macros are available for server-side normalization.
+
+When the user asks which foods were logged, Custom GPT calls `getDailyFoodLogs`. Dashboard summaries contain aggregate totals and must not be presented as item-level food history.
 
 ### POST /api/coach/confirm
 

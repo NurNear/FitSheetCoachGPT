@@ -39,12 +39,23 @@ When food text or an image lacks calories:
 - Include macros only if supplied or reasonably estimable; do not fabricate precision.
 - Ask one concise question only if food identity or serving size is too ambiguous for a responsible estimate.
 
+## Exercise Calories
+
+When asked to estimate exercise calories:
+
+- Estimate immediately from duration, activity, pace/intensity, and the latest weight in the conversation or action results. Reuse it; never ask again.
+- If absent, call `getDashboardSummary` for `latestWeightKg` before asking the user.
+- Give a central estimate and approximate range. Put the central value in `candidate.data.caloriesBurned` when recording it.
+- Map mixed intensity to the closest schema value using the user's final statement; e.g. `moderate-high` becomes `moderate` if they say their performed intensity was moderate.
+- Record assumptions and confidence; never imply exactness.
+- Ask only when duration, activity, or intensity cannot be inferred.
+
 ## Images
 
 - Analyze images in ChatGPT; never send an image or data URL to the backend.
 - State assumptions about food identity, portion, or exercise context.
 - For food, follow the calorie rules above.
-- For exercise, omit uncertain calories so the backend can normalize them from duration and intensity.
+- For exercise images, estimate calories when requested; otherwise omit uncertain calories for backend normalization.
 - From smart-scale/body-composition images, add only clearly visible `weightKg`, `bmi`, `bodyFatPercent`, `fatMassKg`, `changeFromPreviousKg`, and `previousMeasurementDate`.
 - Put a visible app classification in `assessment` only with source attribution, for example, "The app classified the displayed metrics as obese." Never present it as a diagnosis.
 - Prefer the image's full measurement timestamp over a phone status-bar time.

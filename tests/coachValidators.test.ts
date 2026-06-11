@@ -40,6 +40,53 @@ describe("coachValidators", () => {
     ).toThrow();
   });
 
+  it("accepts detailed weight data with an ISO datetime offset", () => {
+    expect(
+      coachConfirmSchema.parse({
+        userId: "demo",
+        confirm: true,
+        candidate: {
+          type: "weight",
+          data: {
+            userId: "demo",
+            weightKg: 76.8,
+            bmi: 26.9,
+            bodyFatPercent: 25.1,
+            fatMassKg: 19.3,
+            changeFromPreviousKg: -1.2,
+            previousMeasurementDate: "2026-06-10",
+            assessment: "The app classified the displayed metrics as obese.",
+            loggedAt: "2026-06-11T07:33:47+07:00"
+          }
+        }
+      })
+    ).toMatchObject({
+      candidate: {
+        data: {
+          weightKg: 76.8,
+          loggedAt: "2026-06-11T07:33:47+07:00"
+        }
+      }
+    });
+  });
+
+  it("rejects a slash-formatted weight datetime", () => {
+    expect(() =>
+      coachConfirmSchema.parse({
+        userId: "demo",
+        confirm: true,
+        candidate: {
+          type: "weight",
+          data: {
+            userId: "demo",
+            weightKg: 76.8,
+            loggedAt: "2026/06/11 07:33:47"
+          }
+        }
+      })
+    ).toThrow();
+  });
+
   it("accepts a valid behavior query", () => {
     expect(
       behaviorQuerySchema.parse({

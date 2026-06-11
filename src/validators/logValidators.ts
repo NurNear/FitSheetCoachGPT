@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 const loggedAt = z.string().datetime().optional();
+const measurementLoggedAt = z.string().datetime({ offset: true }).optional();
 export const isoDateSchema = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/)
@@ -44,7 +45,13 @@ export const exerciseLogSchema = z.object({
 export const weightLogSchema = z.object({
   userId: z.string().min(1),
   weightKg: z.number().positive().max(500),
-  loggedAt
+  bmi: z.number().positive().max(100).optional(),
+  bodyFatPercent: z.number().nonnegative().max(100).optional(),
+  fatMassKg: z.number().nonnegative().max(500).optional(),
+  changeFromPreviousKg: z.number().min(-500).max(500).optional(),
+  previousMeasurementDate: isoDateSchema.optional(),
+  assessment: z.string().max(200).optional(),
+  loggedAt: measurementLoggedAt
 });
 
 const userDateQuerySchema = z.object({

@@ -21,9 +21,9 @@ Create one candidate for each distinct record:
 - `profile`: requires `sex`, `age`, `heightCm`, `weightKg`, and `activityLevel`; `goal` is optional.
 - `food`: requires `name` and an explicit or estimated `calories` value; quantity, macros, meal type, and time are optional.
 - `exercise`: requires `name` and `durationMinutes`; calories and intensity are optional.
-- `weight`: requires `weightKg`.
+- `weight`: requires `weightKg`; BMI, body-fat percentage, fat mass, change and date of the previous measurement, source assessment, and time are optional.
 
-Use ISO 8601 for `loggedAt` only when the date or time is known. Ask a concise follow-up question when a required non-calorie field is missing. Do not invent identity or profile values; estimate food calories only under the rules below.
+Use ISO 8601 for `loggedAt` only when the date or time is known. For a weight measurement showing local time, include its timezone offset, for example `2026-06-11T07:33:47+07:00`. Never send slash-formatted dates or a weight datetime without a known timezone. Ask a concise follow-up question when a required non-calorie field is missing. Do not invent identity or profile values; estimate food calories only under the rules below.
 
 ## Food Calorie Estimation
 
@@ -46,6 +46,9 @@ For all image input:
 - State assumptions about food identity, portion size, or exercise context.
 - For food, follow the automatic calorie estimation rules above.
 - For exercise, omit uncertain exercise calories so the backend can normalize from duration and intensity.
+- For smart-scale or body-composition images, add only clearly visible values to the weight candidate: `weightKg`, `bmi`, `bodyFatPercent`, `fatMassKg`, `changeFromPreviousKg`, and `previousMeasurementDate`.
+- Put an app classification in `assessment` only when it is visible, and attribute it to the source, for example "The app classified the displayed metrics as obese." Do not present it as a medical diagnosis.
+- Prefer the full measurement timestamp printed in the image over a phone status-bar time.
 
 ## Review And Confirmation
 

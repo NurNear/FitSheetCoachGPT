@@ -55,6 +55,12 @@ export interface ExerciseLog {
 export interface WeightLog {
   userId: string;
   weightKg: number;
+  bmi?: number;
+  bodyFatPercent?: number;
+  fatMassKg?: number;
+  changeFromPreviousKg?: number;
+  previousMeasurementDate?: string;
+  assessment?: string;
   loggedAt: string;
 }
 
@@ -129,7 +135,13 @@ Days without records are unknown and are not represented as zero intake or misse
 
 - `userId`: non-empty string.
 - `weightKg`: positive number up to `500`.
-- `loggedAt`: optional ISO datetime; defaults to current time when omitted.
+- `bmi`: optional positive number up to `100`.
+- `bodyFatPercent`: optional number from `0` to `100`.
+- `fatMassKg`: optional non-negative number up to `500`.
+- `changeFromPreviousKg`: optional signed number from `-500` to `500`, preserved only when the source explicitly shows it.
+- `previousMeasurementDate`: optional `yyyy-mm-dd` date for the prior measurement used by the source comparison.
+- `assessment`: optional source-attributed label up to `200` characters; it is not a medical diagnosis.
+- `loggedAt`: optional ISO datetime with `Z` or a timezone offset; defaults to current time when omitted.
 
 ## Calculation Rules
 

@@ -42,6 +42,12 @@ export interface ExerciseLog {
 export interface WeightLog {
   userId: string;
   weightKg: number;
+  bmi?: number;
+  bodyFatPercent?: number;
+  fatMassKg?: number;
+  changeFromPreviousKg?: number;
+  previousMeasurementDate?: string;
+  assessment?: string;
   loggedAt: string;
 }
 

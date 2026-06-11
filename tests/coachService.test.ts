@@ -181,4 +181,36 @@ describe("coachService", () => {
     expect(storage.weights).toHaveLength(1);
     expect(storage.weights[0]?.loggedAt).toEqual(expect.any(String));
   });
+
+  it("saves body-composition details and normalizes an offset datetime", async () => {
+    const storage = createMemoryStorage();
+    const response = await confirmCoachCandidate(storage, {
+      userId: "demo",
+      confirm: true,
+      candidate: {
+        type: "weight",
+        data: {
+          userId: "demo",
+          weightKg: 76.8,
+          bmi: 26.9,
+          bodyFatPercent: 25.1,
+          fatMassKg: 19.3,
+          changeFromPreviousKg: -1.2,
+          previousMeasurementDate: "2026-06-10",
+          assessment: "App classified the displayed body-composition metrics as obese.",
+          loggedAt: "2026-06-11T07:33:47+07:00"
+        }
+      }
+    });
+
+    expect(response.saved).toMatchObject({
+      weightKg: 76.8,
+      bmi: 26.9,
+      bodyFatPercent: 25.1,
+      fatMassKg: 19.3,
+      changeFromPreviousKg: -1.2,
+      previousMeasurementDate: "2026-06-10",
+      loggedAt: "2026-06-11T00:33:47.000Z"
+    });
+  });
 });

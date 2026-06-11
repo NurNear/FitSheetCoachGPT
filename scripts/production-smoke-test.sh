@@ -166,15 +166,26 @@ assert_json '.ok == true and .data.saved.caloriesBurned == 120' "confirmed exerc
 weight_data="$(
   jq -nc \
     --arg userId "$OWNER_USER_ID" \
-    --arg loggedAt "${TODAY_UTC}T09:00:00.000Z" \
-    '{userId: $userId, weightKg: 74.8, loggedAt: $loggedAt}'
+    --arg loggedAt "${TODAY_UTC}T09:00:00+07:00" \
+    '{
+      userId: $userId,
+      weightKg: 74.8,
+      bmi: 24.4,
+      bodyFatPercent: 20,
+      fatMassKg: 15,
+      changeFromPreviousKg: -0.2,
+      assessment: "Production smoke body composition",
+      loggedAt: $loggedAt
+    }'
 )"
 request 201 "confirmed weight" \
   -X POST \
   "${auth_headers[@]}" \
   --data "$(confirm_payload weight "$weight_data" true)" \
   "${BASE_URL}/api/coach/confirm"
-assert_json '.ok == true and .data.saved.weightKg == 74.8' "confirmed weight"
+assert_json \
+  '.ok == true and .data.saved.weightKg == 74.8 and .data.saved.bmi == 24.4 and (.data.saved.loggedAt | endswith("Z"))' \
+  "confirmed weight"
 
 request 200 "dashboard read-back" \
   --get \

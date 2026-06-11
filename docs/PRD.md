@@ -73,6 +73,7 @@ Users need a fast way to describe meals, workouts, weight updates, and goals nat
 - Daily summary includes calories in, calories out, macros, latest weight, BMR, TDEE, calorie target, and a recommendation when data exists.
 - Users can retrieve the confirmed food items behind a day's aggregate calorie total.
 - Summary requests can cover today, an explicit date range, or all records from the first confirmed weight, with itemized food, exercise, weight, and analysis.
+- Weight images can preserve clearly visible BMI, body-fat percentage, fat mass, prior-measurement change/date, and source-attributed assessment details.
 - Production deployment uses Upstash Redis without filesystem writes.
 - Local smoke testing can use temporary memory storage when persistence is not needed.
 

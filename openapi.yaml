@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: FitSheet Coach API
-  version: 0.4.0
+  version: 0.5.0
   description: Full backend contract for owner-bound, confirm-before-save health tracking and detailed reports.
 servers:
   - url: https://fit-sheet-coach-gpt.vercel.app
@@ -488,9 +488,31 @@ components:
           type: number
           exclusiveMinimum: 0
           maximum: 500
+        bmi:
+          type: number
+          exclusiveMinimum: 0
+          maximum: 100
+        bodyFatPercent:
+          type: number
+          minimum: 0
+          maximum: 100
+        fatMassKg:
+          type: number
+          minimum: 0
+          maximum: 500
+        changeFromPreviousKg:
+          type: number
+          minimum: -500
+          maximum: 500
+        previousMeasurementDate:
+          $ref: "#/components/schemas/IsoDate"
+        assessment:
+          type: string
+          maxLength: 200
         loggedAt:
           type: string
           format: date-time
+          description: ISO 8601 datetime. Timezone offsets such as 2026-06-11T07:33:47+07:00 are accepted.
     CoachCandidate:
       oneOf:
         - $ref: "#/components/schemas/ProfileCandidate"

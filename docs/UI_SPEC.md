@@ -76,6 +76,7 @@ Content:
 - Candidate type: profile, food, exercise, or weight.
 - Confidence notes and assumptions.
 - An approximate calorie value and, when useful, a conversational uncertainty range for each food candidate.
+- Clearly visible smart-scale details and a source-attributed assessment for weight candidates.
 - Editable fields for candidate corrections.
 
 Components:

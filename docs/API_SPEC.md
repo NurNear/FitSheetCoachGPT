@@ -237,6 +237,16 @@ Required fields:
 - `userId`
 - `weightKg`
 
+Optional smart-scale fields:
+
+- `bmi`
+- `bodyFatPercent`
+- `fatMassKg`
+- `changeFromPreviousKg`
+- `previousMeasurementDate`
+- `assessment`
+- `loggedAt`, as an ISO 8601 datetime with `Z` or a timezone offset
+
 Example:
 
 ```bash
@@ -245,7 +255,14 @@ curl -X POST http://localhost:3000/api/logs/weight \
   -H "x-api-key: your-api-key" \
   -d '{
     "userId": "demo",
-    "weightKg": 81.6
+    "weightKg": 76.8,
+    "bmi": 26.9,
+    "bodyFatPercent": 25.1,
+    "fatMassKg": 19.3,
+    "changeFromPreviousKg": -1.2,
+    "previousMeasurementDate": "2026-06-10",
+    "assessment": "The app classified the displayed metrics as obese.",
+    "loggedAt": "2026-06-11T07:33:47+07:00"
   }'
 ```
 
@@ -256,8 +273,14 @@ Response:
   "ok": true,
   "data": {
     "userId": "demo",
-    "weightKg": 81.6,
-    "loggedAt": "2026-05-14T08:30:00.000Z"
+    "weightKg": 76.8,
+    "bmi": 26.9,
+    "bodyFatPercent": 25.1,
+    "fatMassKg": 19.3,
+    "changeFromPreviousKg": -1.2,
+    "previousMeasurementDate": "2026-06-10",
+    "assessment": "The app classified the displayed metrics as obese.",
+    "loggedAt": "2026-06-11T00:33:47.000Z"
   }
 }
 ```

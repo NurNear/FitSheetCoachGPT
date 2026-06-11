@@ -63,6 +63,7 @@
 - [ ] Add daily summary examples for users with profile and logs.
 - [x] Add a separate read endpoint for daily food items instead of expanding the summary response.
 - [x] Add combined today, date-range, and all-time coach summary reports.
+- [x] Accept timezone-offset measurement timestamps and smart-scale body-composition details.
 - [ ] Decide whether summary date should use user timezone in a future phase.
 - [ ] Add UI-ready response fields only after updating `openapi.yaml`.
 

@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: FitSheet Coach GPT Actions
-  version: 0.4.0
+  version: 0.5.0
   description: Owner-bound actions for confirmed health-log persistence and detailed read-only reports.
 servers:
   - url: https://fit-sheet-coach-gpt.vercel.app
@@ -349,6 +349,22 @@ components:
         weightKg:
           type: number
           exclusiveMinimum: 0
+        bmi:
+          type: number
+          exclusiveMinimum: 0
+        bodyFatPercent:
+          type: number
+          minimum: 0
+          maximum: 100
+        fatMassKg:
+          type: number
+          minimum: 0
+        changeFromPreviousKg:
+          type: number
+        previousMeasurementDate:
+          $ref: "#/components/schemas/IsoDate"
+        assessment:
+          type: string
         loggedAt:
           type: string
           format: date-time
@@ -387,9 +403,38 @@ components:
           type: number
           exclusiveMinimum: 0
           maximum: 500
+        bmi:
+          type: number
+          exclusiveMinimum: 0
+          maximum: 100
+          description: Body mass index shown in the submitted source.
+        bodyFatPercent:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Body-fat percentage shown in the submitted source.
+        fatMassKg:
+          type: number
+          minimum: 0
+          maximum: 500
+          description: Fat mass in kilograms shown in the submitted source.
+        changeFromPreviousKg:
+          type: number
+          minimum: -500
+          maximum: 500
+          description: Weight difference from the previous measurement when explicitly shown.
+        previousMeasurementDate:
+          allOf:
+            - $ref: "#/components/schemas/IsoDate"
+          description: Calendar date of the previous measurement when explicitly shown.
+        assessment:
+          type: string
+          maxLength: 200
+          description: Short source-attributed assessment, such as an app classification. Do not present it as a medical diagnosis.
         loggedAt:
           type: string
           format: date-time
+          description: Use ISO 8601 with the known timezone offset, for example 2026-06-11T07:33:47+07:00.
     CandidateMetadata:
       type: object
       properties:

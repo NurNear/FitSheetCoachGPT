@@ -135,6 +135,7 @@ paths:
                   userId: demo
                   name: Chicken rice
                   quantity: 1 plate
+                  calories: 488
                   proteinG: 35
                   carbsG: 60
                   fatG: 12
@@ -363,6 +364,7 @@ components:
         calories:
           type: number
           minimum: 0
+          description: Total kcal supplied by the client. Custom GPT food candidates should include an explicit or estimated value.
         proteinG:
           type: number
           minimum: 0

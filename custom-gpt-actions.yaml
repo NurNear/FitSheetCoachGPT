@@ -178,7 +178,7 @@ components:
           format: date-time
     FoodInput:
       type: object
-      required: [userId, name]
+      required: [userId, name, calories]
       additionalProperties: false
       properties:
         userId:
@@ -191,6 +191,7 @@ components:
         calories:
           type: number
           minimum: 0
+          description: Total kcal explicitly provided by the user or estimated by the GPT from the food description or image before confirmation.
         proteinG:
           type: number
           minimum: 0

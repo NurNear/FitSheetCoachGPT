@@ -54,6 +54,9 @@ Behavior:
 
 - Keep image analysis inside ChatGPT.
 - Do not send raw images to the backend unless a future endpoint explicitly requires it.
+- Estimate food calories from either text or images when the user does not provide them.
+- Use stated quantities and ingredients when available; otherwise use visible portions or common serving sizes and disclose the assumption.
+- Do not ask the user to calculate calories. Ask about food identity or serving size only when the input is too ambiguous for a responsible estimate.
 - If the coach needs more information, ask a follow-up question before calling a save action.
 
 ### 2. AI Review and Confirmation
@@ -72,6 +75,7 @@ Content:
 - One or more structured log candidates.
 - Candidate type: profile, food, exercise, or weight.
 - Confidence notes and assumptions.
+- An approximate calorie value and, when useful, a conversational uncertainty range for each food candidate.
 - Editable fields for candidate corrections.
 
 Components:

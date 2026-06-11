@@ -154,6 +154,8 @@ calories = proteinG * 4 + carbsG * 4 + fatG * 9
 
 Missing macro fields count as `0`.
 
+For the Custom GPT flow, food candidates should include a calorie value before confirmation. When the user does not provide one, Custom GPT estimates a central value from the text description or image, discloses meaningful uncertainty during review, and records key portion or ingredient assumptions in candidate metadata. The backend does not analyze raw text or images.
+
 ### Exercise Calories
 
 If `caloriesBurned` is provided, it is rounded and preserved.

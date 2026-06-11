@@ -13,6 +13,7 @@ All notable project changes should be recorded here.
 - Added structured seven-day behavior insights with coverage and evidence.
 - Added a restricted `custom-gpt-actions.yaml` schema and reusable Custom GPT instructions.
 - Added an automated production smoke test for authentication, owner binding, confirmed writes, and read-back.
+- Added automatic food calorie estimation guidance for text and image input when the user does not provide calories.
 
 ## 0.1.0 - Initial Setup
 

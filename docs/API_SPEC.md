@@ -322,6 +322,8 @@ Update both schemas when an Actions endpoint changes. Direct profile and log wri
 
 Custom GPT analyzes text and images inside ChatGPT. The backend accepts only structured confirmed candidates and read requests; it does not receive raw images or require `OPENAI_API_KEY`.
 
+For food input, Custom GPT estimates calories when the user does not provide them. It sends one central estimate in `candidate.data.calories`, records important portion and ingredient assumptions in candidate metadata, and shows the estimate to the user before confirmation. Direct backend food-log clients may still omit calories when macros are available for server-side normalization.
+
 ### POST /api/coach/confirm
 
 Persists one selected Custom GPT-proposed candidate after explicit user confirmation. Candidate data is validated against the same rules as existing profile and log endpoints.
@@ -337,6 +339,7 @@ Behavior:
 
 - Reject requests without explicit confirmation.
 - Reject a candidate whose nested `userId` differs from the top-level `userId`.
+- Expect Custom GPT food candidates to include explicit or estimated calories.
 - Save confirmed candidates through the existing normalization and storage services.
 - Return the saved record and any post-save coaching message.
 

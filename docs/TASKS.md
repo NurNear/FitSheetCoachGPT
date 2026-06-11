@@ -85,6 +85,7 @@
 - [x] Design `POST /api/coach/confirm` request and response schemas.
 - [x] Remove server-side OpenAI analysis from the MVP.
 - [x] Ensure Custom GPT can send structured profile, food, exercise, and weight candidates to the backend.
+- [x] Require Custom GPT to estimate food calories from text or images when the user does not provide them.
 - [x] Require explicit user confirmation before saving candidates.
 - [x] Add behavior insights based only on submitted inputs and stored logs.
 - [ ] Test text input, image input, edit, reject, and confirm flows inside Custom GPT.

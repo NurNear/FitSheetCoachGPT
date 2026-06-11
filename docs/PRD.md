@@ -55,7 +55,7 @@ Users need a fast way to describe meals, workouts, weight updates, and goals nat
 
 ## User Stories
 
-- As a user, I want to send a meal photo or meal description so the coach can estimate what should be logged.
+- As a user, I want to send a meal photo or meal description without calculating calories so the coach can estimate them for review.
 - As a user, I want to describe workouts naturally so the coach can infer duration, intensity, and calories when possible.
 - As a user, I want to review and edit AI-proposed logs before anything is saved.
 - As a user, I want the coach to detect patterns in my submitted history and give practical next-step advice.
@@ -66,6 +66,7 @@ Users need a fast way to describe meals, workouts, weight updates, and goals nat
 ## Success Metrics
 
 - The Custom GPT can accept text and image input and produce structured log candidates, confidence notes, and coaching guidance.
+- Food candidates include explicit or automatically estimated calories even when the user did not provide a calorie value.
 - The Custom GPT can call backend GPT Actions with confirmed candidates.
 - Confirmed candidates save profile, food, exercise, or weight data through existing storage services.
 - Invalid requests return clear validation errors.
